@@ -7,12 +7,52 @@
 <meta name="theme-color" content="#2563eb">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Mukesh Personal Ledger</title>
+
 <style>
-body{font-family:Arial;background:linear-gradient(135deg,#eef2ff,#f8fafc);margin:0;padding:20px} .container{max-width:760px;margin:auto;background:#fff;padding:20px;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
-input,select,button{width:100%;padding:12px;margin:8px 0;border:1px solid #dbeafe;border-radius:14px;box-sizing:border-box} button{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;font-weight:bold} .nav{display:flex;gap:10px}.nav button{flex:1;width:auto}.entry{border:1px solid #e5e7eb;border-radius:18px;padding:12px;margin:10px 0;background:#f9fafb}.small{font-size:14px;color:#555}
+body{
+  font-family:Arial;
+  background:linear-gradient(135deg,#eef2ff,#f8fafc);
+  margin:0;
+  padding:20px
+}
+.container{
+  max-width:760px;
+  margin:auto;
+  background:#fff;
+  padding:20px;
+  border-radius:24px;
+  box-shadow:0 10px 30px rgba(0,0,0,.12)
+}
+input,select,button{
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  border:1px solid #dbeafe;
+  border-radius:14px;
+  box-sizing:border-box
+}
+button{
+  background:linear-gradient(135deg,#2563eb,#7c3aed);
+  color:#fff;
+  border:none;
+  font-weight:bold
+}
+.nav{display:flex;gap:10px}
+.nav button{flex:1;width:auto}
+.entry{
+  border:1px solid #e5e7eb;
+  border-radius:18px;
+  padding:12px;
+  margin:10px 0;
+  background:#f9fafb
+}
+.small{font-size:14px;color:#555}
 </style>
 </head>
+
 <body>
+
+<!-- PIN SCREEN -->
 <div id="pinScreen" class="container" style="display:none">
 <h2>Mukesh Personal Ledger</h2>
 <p class="small">Enter your 4-digit PIN</p>
@@ -20,202 +60,258 @@ input,select,button{width:100%;padding:12px;margin:8px 0;border:1px solid #dbeaf
 <button onclick="unlockApp()">Unlock</button>
 <button onclick="setPin()">Set / Change PIN</button>
 </div>
+
+<!-- APP SCREEN -->
 <div class="container" id="appScreen">
+
 <h2>Mukesh Personal Ledger</h2>
-<div class="nav"><button onclick="showTab('dashboard')">Dashboard</button><button onclick="showTab('monthly')">Monthly</button><button onclick="generateStatement()">PDF</button></div>
-<button id="installBtn" onclick="installApp()" style="display:none">Install Mukesh Personal Ledger</button>
+
+<div class="nav">
+<button onclick="showTab('dashboard')">Dashboard</button>
+<button onclick="showTab('monthly')">Monthly</button>
+<button onclick="generateStatement()">PDF</button>
+</div>
+
+<button id="installBtn" onclick="installApp()" style="display:none">
+Install App
+</button>
+
 <input type="date" id="date">
-<select id="type" onchange="toggleFields()"><option value="expense">Daily Expense</option><option value="income">Income / Salary</option><option value="loan">Money Given</option><option value="loan_return">Money Returned</option><option value="transfer">Transfer</option></select>
-<select id="source"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit_card">Credit Card</option></select>
-<div id="targetWrap" style="display:none"><select id="target"><option value="">Transfer To</option><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit_card">Credit Card</option></select></div>
-<div id="categoryWrap"><input type="text" id="category" placeholder="Category / Person Name"></div>
-<div id="daysWrap" style="display:none"><input type="number" id="days" placeholder="Reminder days"></div>
+
+<select id="type" onchange="toggleFields()">
+<option value="expense">Daily Expense</option>
+<option value="income">Income</option>
+<option value="loan">Money Given</option>
+<option value="loan_return">Money Returned</option>
+<option value="transfer">Transfer</option>
+</select>
+
+<select id="source">
+<option value="bank">Bank</option>
+<option value="wallet">Wallet</option>
+<option value="credit_card">Credit Card</option>
+</select>
+
+<div id="targetWrap" style="display:none">
+<select id="target">
+<option value="">Transfer To</option>
+<option value="bank">Bank</option>
+<option value="wallet">Wallet</option>
+<option value="credit_card">Credit Card</option>
+</select>
+</div>
+
+<div id="categoryWrap">
+<input type="text" id="category" placeholder="Category / Person">
+</div>
+
+<div id="daysWrap" style="display:none">
+<input type="number" id="days" placeholder="Reminder days">
+</div>
+
 <input type="number" id="amount" placeholder="Amount">
 <input type="text" id="note" placeholder="Note">
+
 <button onclick="addEntry()">Add Entry</button>
+
 <h3>Opening Balances</h3>
-<input type="number" id="bankOpening" placeholder="Bank"><input type="number" id="walletOpening" placeholder="Wallet"><input type="number" id="cardOpening" placeholder="Credit card available"><button onclick="saveBalances()">Save Balances</button>
-<div id="dashboardTab"><h3>Summary</h3><div id="totals" class="small"></div><h3>Monthly Snapshot</h3><div id="dashboardSummary" class="small"></div><h3>Accounts</h3><div id="accounts" class="small"></div><h3>Backup Status</h3><div id="backupStatus" class="small"></div><button onclick="restoreLatestBackup()">Restore Latest Backup</button><h3>Pending Credit</h3><div id="creditList" class="small"></div><div id="entries"></div></div>
-<div id="monthlyTab" style="display:none"><input id="searchBox" placeholder="Search" oninput="render()"><h3>Monthly</h3><div id="monthlyHistory" class="small"></div><h3>Category Summary</h3><div id="categorySummary" class="small"></div><h3>Overdue</h3><div id="overdueList" class="small"></div></div>
+<input type="number" id="bankOpening" placeholder="Bank">
+<input type="number" id="walletOpening" placeholder="Wallet">
+<input type="number" id="cardOpening" placeholder="Credit Card">
+<button onclick="saveBalances()">Save Balances</button>
+
+<!-- DASHBOARD -->
+<div id="dashboardTab">
+<h3>Summary</h3>
+<div id="totals" class="small"></div>
+
+<h3>Monthly Snapshot</h3>
+<div id="dashboardSummary" class="small"></div>
+
+<h3>Accounts</h3>
+<div id="accounts" class="small"></div>
+
+<h3>Backup</h3>
+<div id="backupStatus" class="small"></div>
+
+<button onclick="restoreLatestBackup()">Restore Backup</button>
+
+<h3>Pending Credit</h3>
+<div id="creditList" class="small"></div>
+
+<div id="entries"></div>
 </div>
+
+<!-- MONTHLY -->
+<div id="monthlyTab" style="display:none">
+<input id="searchBox" placeholder="Search">
+<h3>Monthly</h3>
+<div id="monthlyHistory" class="small"></div>
+
+<h3>Category Summary</h3>
+<div id="categorySummary" class="small"></div>
+
+<h3>Overdue</h3>
+<div id="overdueList" class="small"></div>
+</div>
+
+</div>
+
 <script>
 let deferredPrompt=null;
-if ('serviceWorker' in navigator) {
- window.addEventListener('load', () => {
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
- });
-}
-window.addEventListener('beforeinstallprompt',(e)=>{
- e.preventDefault();
- deferredPrompt=e;
- const btn=document.getElementById('installBtn');
- if(btn) btn.style.display='block';
-});
 
 let entries=JSON.parse(localStorage.getItem('finance_entries')||'[]');
 let appPin=localStorage.getItem('ledger_pin')||'';
 let lastBackup=localStorage.getItem('ledger_last_backup')||'';
 let balances=JSON.parse(localStorage.getItem('finance_balances')||'{"bank":0,"wallet":0,"credit_card":0}');
+
+let renderTimer;
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+window.addEventListener('beforeinstallprompt',(e)=>{
+ e.preventDefault();
+ deferredPrompt=e;
+ document.getElementById('installBtn').style.display='block';
+});
+
 function installApp(){
- if(!deferredPrompt) return alert('Install option not available yet');
+ if(!deferredPrompt) return alert('Not available');
  deferredPrompt.prompt();
  deferredPrompt=null;
- document.getElementById('installBtn').style.display='none';
 }
 
 function setPin(){
- const p=prompt('Enter new 4-digit PIN');
- if(!/^\d{4}$/.test(p||'')) return alert('PIN must be 4 digits');
+ const p=prompt('Enter 4-digit PIN');
+ if(!/^\d{4}$/.test(p||'')) return alert('Invalid PIN');
  localStorage.setItem('ledger_pin',p);
  appPin=p;
  autoBackup();
- alert('PIN saved');
 }
+
 function autoBackup(){
  const today=new Date().toISOString().slice(0,10);
- const payload={entries:entries,balances:balances,pin:appPin,date:today};
- localStorage.setItem('ledger_auto_backup',JSON.stringify(payload));
+ localStorage.setItem('ledger_auto_backup',JSON.stringify({entries,balances,pin:appPin,date:today}));
  localStorage.setItem('ledger_last_backup',today);
  lastBackup=today;
 }
+
 function restoreLatestBackup(){
  const raw=localStorage.getItem('ledger_auto_backup');
- if(!raw) return alert('No backup available');
- if(!confirm('Restore latest backup? Current data will be replaced.')) return;
- try{
-   const data=JSON.parse(raw);
-   entries=data.entries||[];
-   balances=data.balances||{bank:0,wallet:0,credit_card:0};
-   appPin=data.pin||appPin;
-   save();
-   alert('Backup restored successfully');
- }catch(e){
-   alert('Backup restore failed');
- }
+ if(!raw) return alert('No backup');
+ if(!confirm('Restore?')) return;
+ const d=JSON.parse(raw);
+ entries=d.entries||[];
+ balances=d.balances||balances;
+ appPin=d.pin||appPin;
+ save();
 }
+
 function unlockApp(){
- const p=document.getElementById('pinInput').value;
- if(p!==appPin) return alert('Incorrect PIN');
+ if(document.getElementById('pinInput').value!==appPin)
+ return alert('Wrong PIN');
+
  document.getElementById('pinScreen').style.display='none';
  document.getElementById('appScreen').style.display='block';
 }
+
 function toggleFields(){
  const t=document.getElementById('type').value;
  document.getElementById('targetWrap').style.display=t==='transfer'?'block':'none';
  document.getElementById('categoryWrap').style.display=t==='transfer'?'none':'block';
  document.getElementById('daysWrap').style.display=t==='loan'?'block':'none';
 }
+
 function showTab(tab){
  document.getElementById('dashboardTab').style.display=tab==='dashboard'?'block':'none';
  document.getElementById('monthlyTab').style.display=tab==='monthly'?'block':'none';
 }
+
 function save(){
  localStorage.setItem('finance_entries',JSON.stringify(entries));
  autoBackup();
- render();
+
+ clearTimeout(renderTimer);
+ renderTimer=setTimeout(render,100);
 }
+
 function saveBalances(){
- balances={bank:+bankOpening.value||0,wallet:+walletOpening.value||0,credit_card:+cardOpening.value||0};
+ balances={
+  bank:+document.getElementById('bankOpening').value||0,
+  wallet:+document.getElementById('walletOpening').value||0,
+  credit_card:+document.getElementById('cardOpening').value||0
+ };
  localStorage.setItem('finance_balances',JSON.stringify(balances));
  autoBackup();
  render();
 }
+
 function addEntry(){
  const e={
-  date:document.getElementById('date').value,
-  type:document.getElementById('type').value,
-  source:document.getElementById('source').value,
-  target:document.getElementById('target').value,
-  category:document.getElementById('category').value.trim(),
-  amount:parseFloat(document.getElementById('amount').value),
-  note:document.getElementById('note').value.trim(),
-  days:parseInt(document.getElementById('days').value)||0
+  date:date.value,
+  type:type.value,
+  source:source.value,
+  target:target.value,
+  category:category.value.trim(),
+  amount:+amount.value,
+  note:note.value.trim(),
+  days:+days.value||0
  };
- if(!e.date||isNaN(e.amount)) return alert('Enter date and amount');
- if(e.type!=='transfer'&&!e.category) return alert('Enter category/person');
- if(e.type==='transfer'&&(!e.target||e.target===e.source)) return alert('Choose different transfer account');
+
+ if(!e.date||!e.amount) return alert('Invalid data');
+
  entries.unshift(e);
- ['category','amount','note','days','target'].forEach(id=>document.getElementById(id).value='');
  save();
-}
-function quickReturn(name){const amt=+prompt('Returned amount from '+name); if(!amt)return; const src=prompt('Received in bank/wallet','bank')||'bank'; entries.unshift({date:new Date().toISOString().slice(0,10),type:'loan_return',source:src,target:'',category:name,amount:amt,note:'Quick return',days:0}); save();}
-function render(){bankOpening.value=balances.bank;walletOpening.value=balances.wallet;cardOpening.value=balances.credit_card; const m=new Date().toISOString().slice(0,7); let income=0,expense=0,loan=0,returned=0,use={bank:0,wallet:0,credit_card:0},people={},monthly={},cats={},over=[]; let html=''; entries.forEach((e,i)=>{const mon=e.date.slice(0,7); if(!monthly[mon])monthly[mon]={income:0,expense:0,loan:0}; if(e.type==='income')monthly[mon].income+=e.amount; if(e.type==='expense')monthly[mon].expense+=e.amount; if(e.type==='loan')monthly[mon].loan+=e.amount; if(e.type==='expense')cats[e.category]=(cats[e.category]||0)+e.amount; if(e.type==='loan')people[e.category]=(people[e.category]||0)+e.amount; if(e.type==='loan_return')people[e.category]=(people[e.category]||0)-e.amount; if(e.type==='loan'&&e.days){let d=new Date(e.date);d.setDate(d.getDate()+e.days); if(new Date()>d&&people[e.category]>0)over.push(e.category+' overdue ₹'+people[e.category].toFixed(2));} if(e.date.startsWith(m)){ if(e.type==='income')income+=e.amount; if(e.type==='expense')expense+=e.amount; if(e.type==='loan')loan+=e.amount; if(e.type==='loan_return')returned+=e.amount; if(e.type==='income'||e.type==='loan_return') use[e.source]-=e.amount; else if(e.type==='transfer'){use[e.source]+=e.amount; use[e.target]-=e.amount;} else use[e.source]+=e.amount;} const canDelete=(Date.now()-new Date(e.date).getTime())<86400000; html+=<div class='entry'><strong>${e.category||'Transfer'}</strong> ₹${e.amount.toFixed(2)}<br><span class='small'>${e.date} | ${e.type} | ${e.source}${e.target?' → '+e.target:''}</span><br>${e.note||''}<br>${canDelete?<button onclick="removeEntry(${i})">Delete</button>:<span class='small'>Locked after 24 hrs</span>}</div>; }); const net = income-expense-(loan-returned); totals.innerHTML=Income: ₹${income.toFixed(2)}<br>Expenses: ₹${expense.toFixed(2)}<br>Loans Given: ₹${loan.toFixed(2)}<br>Returned: ₹${returned.toFixed(2)}<br>Net Position: ₹${net.toFixed(2)}; document.getElementById('dashboardSummary').innerHTML=<strong>This Month</strong><br>Total Out: ₹${(expense+loan).toFixed(2)}<br>Total In: ₹${(income+returned).toFixed(2)}<br>Outstanding: ₹${(loan-returned).toFixed(2)}<br>Status: ${net>=0?'Positive':'Negative'} Cash Flow;
- document.getElementById('backupStatus').innerHTML = lastBackup ? Last automatic backup: ${lastBackup} : 'No backup yet'; accounts.innerHTML=Bank: ₹${(balances.bank-use.bank).toFixed(2)}<br>Wallet: ₹${(balances.wallet-use.wallet).toFixed(2)}<br>Credit Available: ₹${(balances.credit_card-use.credit_card).toFixed(2)}; creditList.innerHTML=Object.keys(people).filter(n=>people[n]>0).map(n=><button onclick="quickReturn('${n}')">${n}: ₹${people[n].toFixed(2)}</button>).join('')||'No pending credit'; monthlyHistory.innerHTML=Object.keys(monthly).sort().reverse().map(k=><div><b>${k}</b><br>Income ₹${monthly[k].income.toFixed(2)} | Expense ₹${monthly[k].expense.toFixed(2)} | Loan ₹${monthly[k].loan.toFixed(2)}</div><hr>).join(''); categorySummary.innerHTML=Object.keys(cats).map(c=><div>${c}: ₹${cats[c].toFixed(2)}</div>).join('')||'No categories'; overdueList.innerHTML=over.join('<br>')||'No overdue'; document.getElementById('entries').innerHTML=html; }
-function removeEntry(i){entries.splice(i,1);save();}
-function generateStatement(){
- const sel = prompt('Enter month YYYY-MM', new Date().toISOString().slice(0,7));
- if(!sel) return;
- const rows = entries.filter(e=>e.date.startsWith(sel));
- if(!rows.length) return alert('No entries for selected month');
- let balance = 0, totalDebit = 0, totalCredit = 0;
- let s = `
- <html><head><title>Mukesh Statement ${sel}</title>
- <style>
- body{font-family:Arial;padding:24px;background:#fff;color:#222}
- h2,h3{text-align:center;margin:4px 0}
- table{width:100%;border-collapse:collapse;margin-top:18px}
- th,td{padding:10px;border-bottom:1px solid #ccc;text-align:left}
- th{background:#f0f0f0}
- .num{text-align:right}
- .debit{color:#b00020;font-weight:bold}
- .credit{color:#0a7a2f;font-weight:bold}
- .summary{margin-top:18px;padding-top:12px;border-top:2px solid #333}
- </style></head><body>`;
- s += <h2>Mukesh Personal Ledger</h2><h3>Monthly Statement - ${sel}</h3>;
- s += <table><tr><th>Date</th><th>Particulars</th><th>Payment Source</th><th>Debit</th><th>Credit</th><th>Balance</th></tr>;
- rows.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
-   let debit='', credit='';
-   const src = e.source + (e.target ? ' → ' + e.target : '');
-   if(e.type==='income' || e.type==='loan_return'){
-     balance += e.amount; totalCredit += e.amount; credit = e.amount.toFixed(2);
-   } else {
-     balance -= e.amount; totalDebit += e.amount; debit = e.amount.toFixed(2);
-   }
-   s += `<tr>
-   <td>${e.date}</td>
-   <td>${e.category || e.type}</td>
-   <td>${src}</td>
-   <td class='num debit'>${debit}</td>
-   <td class='num credit'>${credit}</td>
-   <td class='num'>${balance.toFixed(2)}</td>
-   </tr>`;
- });
- s += </table>;
- s += `<div class='summary'>
- <strong>Total Debit:</strong> ₹${totalDebit.toFixed(2)}<br>
- <strong>Total Credit:</strong> ₹${totalCredit.toFixed(2)}<br>
- <strong>Closing Balance:</strong> ₹${balance.toFixed(2)}
- </div>`;
- s += `</body></html>
-<!-- Create these two files when hosting:
-manifest.json
-{
-  "name":"Mukesh Personal Ledger",
-  "short_name":"Mukesh Ledger",
-  "start_url":"./",
-  "display":"standalone",
-  "background_color":"#ffffff",
-  "theme_color":"#2563eb",
-  "icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"}]
+
+ category.value=amount.value=note.value=days.value=target.value='';
 }
 
-sw.js
-self.addEventListener('install',e=>{self.skipWaiting();});
-self.addEventListener('fetch',()=>{});
--->`;
- const w = window.open('', '_blank');
- if(!w) return alert('Please allow popups');
- w.document.write(s);
- w.document.close();
- setTimeout(()=>w.print(),700);
+function removeEntry(i){
+ entries.splice(i,1);
+ save();
 }
+
+function render(){
+ document.getElementById('bankOpening').value=balances.bank;
+ document.getElementById('walletOpening').value=balances.wallet;
+ document.getElementById('cardOpening').value=balances.credit_card;
+
+ let html='';
+ let income=0,expense=0,loan=0,returned=0;
+
+ entries.forEach((e,i)=>{
+  if(e.type==='income') income+=e.amount;
+  if(e.type==='expense') expense+=e.amount;
+  if(e.type==='loan') loan+=e.amount;
+  if(e.type==='loan_return') returned+=e.amount;
+
+  html+=`
+  <div class='entry'>
+  <b>${e.category||e.type}</b> ₹${e.amount}
+  <br><span class='small'>${e.date} | ${e.type}</span>
+  <button onclick="removeEntry(${i})">Delete</button>
+  </div>`;
+ });
+
+ entriesDiv.innerHTML=html;
+
+ totals.innerHTML=Income ₹${income}<br>Expense ₹${expense};
+}
+
 if(appPin){
- document.getElementById('appScreen').style.display='none';
  document.getElementById('pinScreen').style.display='block';
-} else {
+ document.getElementById('appScreen').style.display='none';
+}else{
  document.getElementById('appScreen').style.display='block';
 }
+
 toggleFields();
 render();
 </script>
-</body></html>
+
+</body>
+</html>
