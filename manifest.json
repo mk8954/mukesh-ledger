@@ -1,18 +1,13 @@
 {
-  "name": "Mukesh Personal Ledger",
-  "short_name": "Mukesh Ledger",
-  "start_url": "./index.html",
+  "name": "Expense Tracker Pro",
+  "short_name": "ET Pro",
+  "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "background_color": "#065f46",
+  "theme_color": "#065f46",
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
+      "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }
