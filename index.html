@@ -72,7 +72,7 @@ button.main{width:100%;padding:12px;border:none;border-radius:10px;background:#2
 <div class="qbtn"><button onclick="openForm('expense')">-</button>Expense</div>
 <div class="qbtn"><button onclick="openForm('income')">+</button>Income</div>
 <div class="qbtn"><button onclick="openForm('loan')">₹</button>Credit</div>
-<div class="qbtn"><button onclick="openForm('loan_return')">↩️</button>Return</div>
+<div class="qbtn"><button onclick="openForm('loan_return')">↩</button>Return</div>
 <div class="qbtn"><button onclick="quickTransfer()">⇄</button>Transfer</div>
 </div>
 </div>
@@ -160,103 +160,9 @@ let balances=JSON.parse(localStorage.getItem('balances')||'{"bank":0,"wallet":0,
 let currentType='expense';
 
 function showTab(tab){
-<<<<<<< HEAD
  ['home','statement','formScreen','manage','backup']
  .forEach(id=>document.getElementById(id).classList.add('hidden'));
  document.getElementById(tab).classList.remove('hidden');
-=======
- document.getElementById('dashboardTab').style.display=tab==='dashboard'?'block':'none';
- document.getElementById('monthlyTab').style.display=tab==='monthly'?'block':'none';
-}
-function save(){
- localStorage.setItem('finance_entries',JSON.stringify(entries));
- autoBackup();
- render();
-}
-function saveBalances(){
- balances={bank:+bankOpening.value||0,wallet:+walletOpening.value||0,credit_card:+cardOpening.value||0};
- localStorage.setItem('finance_balances',JSON.stringify(balances));
- autoBackup();
- render();
-}
-function addEntry(){
- const e={
-  date:document.getElementById('date').value,
-  type:document.getElementById('type').value,
-  source:document.getElementById('source').value,
-  target:document.getElementById('target').value,
-  category:document.getElementById('category').value.trim(),
-  amount:parseFloat(document.getElementById('amount').value),
-  note:document.getElementById('note').value.trim(),
-  days:parseInt(document.getElementById('days').value)||0
- };
- if(!e.date||isNaN(e.amount)) return alert('Enter date and amount');
- if(e.type!=='transfer'&&!e.category) return alert('Enter category/person');
- if(e.type==='transfer'&&(!e.target||e.target===e.source)) return alert('Choose different transfer account');
- entries.unshift(e);
- ['category','amount','note','days','target'].forEach(id=>document.getElementById(id).value='');
- save();
-}
-function quickReturn(name){const amt=+prompt('Returned amount from '+name); if(!amt)return; const src=prompt('Received in bank/wallet','bank')||'bank'; entries.unshift({date:new Date().toISOString().slice(0,10),type:'loan_return',source:src,target:'',category:name,amount:amt,note:'Quick return',days:0}); save();}
-function render(){bankOpening.value=balances.bank;walletOpening.value=balances.wallet;cardOpening.value=balances.credit_card; const m=new Date().toISOString().slice(0,7); let income=0,expense=0,loan=0,returned=0,use={bank:0,wallet:0,credit_card:0},people={},monthly={},cats={},over=[]; let html=''; entries.forEach((e,i)=>{const mon=e.date.slice(0,7); if(!monthly[mon])monthly[mon]={income:0,expense:0,loan:0}; if(e.type==='income')monthly[mon].income+=e.amount; if(e.type==='expense')monthly[mon].expense+=e.amount; if(e.type==='loan')monthly[mon].loan+=e.amount; if(e.type==='expense')cats[e.category]=(cats[e.category]||0)+e.amount; if(e.type==='loan')people[e.category]=(people[e.category]||0)+e.amount; if(e.type==='loan_return')people[e.category]=(people[e.category]||0)-e.amount; if(e.type==='loan'&&e.days){let d=new Date(e.date);d.setDate(d.getDate()+e.days); if(new Date()>d&&people[e.category]>0)over.push(e.category+' overdue ₹'+people[e.category].toFixed(2));} if(e.date.startsWith(m)){ if(e.type==='income')income+=e.amount; if(e.type==='expense')expense+=e.amount; if(e.type==='loan')loan+=e.amount; if(e.type==='loan_return')returned+=e.amount; if(e.type==='income'||e.type==='loan_return') use[e.source]-=e.amount; else if(e.type==='transfer'){use[e.source]+=e.amount; use[e.target]-=e.amount;} else use[e.source]+=e.amount;} const canDelete=(Date.now()-new Date(e.date).getTime())<86400000; html+=`<div class='entry'><strong>${e.category||'Transfer'}</strong> ₹${e.amount.toFixed(2)}<br><span class='small'>${e.date} | ${e.type} | ${e.source}${e.target?' → '+e.target:''}</span><br>${e.note||''}<br>${canDelete?`<button onclick="removeEntry(${i})">Delete</button>`:`<span class='small'>Locked after 24 hrs</span>`}</div>`; }); const net = income-expense-(loan-returned); totals.innerHTML=`Income: ₹${income.toFixed(2)}<br>Expenses: ₹${expense.toFixed(2)}<br>Loans Given: ₹${loan.toFixed(2)}<br>Returned: ₹${returned.toFixed(2)}<br>Net Position: ₹${net.toFixed(2)}`; document.getElementById('dashboardSummary').innerHTML=`<strong>This Month</strong><br>Total Out: ₹${(expense+loan).toFixed(2)}<br>Total In: ₹${(income+returned).toFixed(2)}<br>Outstanding: ₹${(loan-returned).toFixed(2)}<br>Status: ${net>=0?'Positive':'Negative'} Cash Flow`;
- document.getElementById('backupStatus').innerHTML = lastBackup ? `Last automatic backup: ${lastBackup}` : 'No backup yet'; accounts.innerHTML=`Bank: ₹${(balances.bank-use.bank).toFixed(2)}<br>Wallet: ₹${(balances.wallet-use.wallet).toFixed(2)}<br>Credit Available: ₹${(balances.credit_card-use.credit_card).toFixed(2)}`; creditList.innerHTML=Object.keys(people).filter(n=>people[n]>0).map(n=>`<button onclick="quickReturn('${n}')">${n}: ₹${people[n].toFixed(2)}</button>`).join('')||'No pending credit'; monthlyHistory.innerHTML=Object.keys(monthly).sort().reverse().map(k=>`<div><b>${k}</b><br>Income ₹${monthly[k].income.toFixed(2)} | Expense ₹${monthly[k].expense.toFixed(2)} | Loan ₹${monthly[k].loan.toFixed(2)}</div><hr>`).join(''); categorySummary.innerHTML=Object.keys(cats).map(c=>`<div>${c}: ₹${cats[c].toFixed(2)}</div>`).join('')||'No categories'; overdueList.innerHTML=over.join('<br>')||'No overdue'; document.getElementById('entries').innerHTML=html; }
-function removeEntry(i){entries.splice(i,1);save();}
-function generateStatement(){
- const sel = prompt('Enter month YYYY-MM', new Date().toISOString().slice(0,7));
- if(!sel) return;
- const rows = entries.filter(e=>e.date.startsWith(sel));
- if(!rows.length) return alert('No entries for selected month');
- let balance = 0, totalDebit = 0, totalCredit = 0;
- let s = `
- <html><head><title>Mukesh Statement ${sel}</title>
- <style>
- body{font-family:Arial;padding:24px;background:#fff;color:#222}
- h2,h3{text-align:center;margin:4px 0}
- table{width:100%;border-collapse:collapse;margin-top:18px}
- th,td{padding:10px;border-bottom:1px solid #ccc;text-align:left}
- th{background:#f0f0f0}
- .num{text-align:right}
- .debit{color:#b00020;font-weight:bold}
- .credit{color:#0a7a2f;font-weight:bold}
- .summary{margin-top:18px;padding-top:12px;border-top:2px solid #333}
- </style></head><body>`;
- s += `<h2>Mukesh Personal Ledger</h2><h3>Monthly Statement - ${sel}</h3>`;
- s += `<table><tr><th>Date</th><th>Particulars</th><th>Payment Source</th><th>Debit</th><th>Credit</th><th>Balance</th></tr>`;
- rows.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
-   let debit='', credit='';
-   const src = e.source + (e.target ? ' → ' + e.target : '');
-   if(e.type==='income' || e.type==='loan_return'){
-     balance += e.amount; totalCredit += e.amount; credit = e.amount.toFixed(2);
-   } else {
-     balance -= e.amount; totalDebit += e.amount; debit = e.amount.toFixed(2);
-   }
-   s += `<tr>
-   <td>${e.date}</td>
-   <td>${e.category || e.type}</td>
-   <td>${src}</td>
-   <td class='num debit'>${debit}</td>
-   <td class='num credit'>${credit}</td>
-   <td class='num'>${balance.toFixed(2)}</td>
-   </tr>`;
- });
- s += `</table>`;
- s += `<div class='summary'>
- <strong>Total Debit:</strong> ₹${totalDebit.toFixed(2)}<br>
- <strong>Total Credit:</strong> ₹${totalCredit.toFixed(2)}<br>
- <strong>Closing Balance:</strong> ₹${balance.toFixed(2)}
- </div>`;
- s += `</body></html>
-<!-- Create these two files when hosting:
-manifest.json
-{
-  "name":"Mukesh Personal Ledger",
-  "short_name":"Mukesh Ledger",
-  "start_url":"./",
-  "display":"standalone",
-  "background_color":"#ffffff",
-  "theme_color":"#2563eb",
-  "icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"}]
->>>>>>> 4272f9c80ce7dae5ca057cd2e4395f29c2dd069a
 }
 
 function openForm(t){currentType=t;formTitle.innerText=t;showTab('formScreen')}
@@ -278,7 +184,7 @@ function transferMoney(){
  let f=fromAcc.value,t=toAcc.value,a=+transferAmt.value;
  if(f===t||!a)return alert('Invalid');
  balances[f]-=a;balances[t]+=a;
- data.unshift({type:'transfer',amount:a,category:Transfer ${f}->${t},source:f,date:new Date().toISOString()});
+ data.unshift({type:'transfer',amount:a,category:`Transfer ${f}->${t}`,source:f,date:new Date().toISOString()});
  save();render();
 }
 
@@ -306,13 +212,13 @@ function render(){
  bankBal.innerText='₹'+balances.bank;
  walletBal.innerText='₹'+balances.wallet;
  creditBal.innerText='₹'+balances.credit;
- entries.innerHTML=data.slice(0,6).map(e=><div class="entry"><div>${e.category}</div><div>₹${e.amount}</div></div>).join('');
+ entries.innerHTML=data.slice(0,6).map(e=>`<div class="entry"><div>${e.category}</div><div>₹${e.amount}</div></div>`).join('');
 }
 
 function generateStatement(){
  let m=stmtMonth.value;
  stmtResult.innerHTML=data.filter(e=>e.date.startsWith(m))
- .map(e=><div class="entry">${e.category} ₹${e.amount}</div>).join('');
+ .map(e=>`<div class="entry">${e.category} ₹${e.amount}</div>`).join('');
 }
 
 function downloadPDF(){
@@ -357,10 +263,6 @@ function downloadPDF(){
 
 render();
 </script>
-<<<<<<< HEAD
 
 </body>
 </html>
-=======
-</body></html>
->>>>>>> 4272f9c80ce7dae5ca057cd2e4395f29c2dd069a
