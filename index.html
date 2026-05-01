@@ -26,11 +26,16 @@ body{margin:0;font-family:Segoe UI;background:#f4f6fb}
 .acc{text-align:center;flex:1}
 
 .quick{display:flex;justify-content:space-around}
-.qbtn{text-align:center;font-size:12px}
+.qbtn{text-align:center;font-size:13px}
 .qbtn button{
   width:55px;height:55px;border-radius:50%;
   border:none;background:#2563eb;color:#fff;font-size:18px;
 }
+.qbtn button:nth-child(1){background:#ef4444}
+.qbtn:nth-child(2) button{background:#22c55e}
+.qbtn:nth-child(3) button{background:#3b82f6}
+.qbtn:nth-child(4) button{background:#f97316}
+.qbtn:nth-child(5) button{background:#8b5cf6}
 
 .entry{display:flex;justify-content:space-between;margin:6px 0}
 .credit{color:green}
@@ -53,17 +58,32 @@ button.main{width:100%;padding:12px;border:none;border-radius:10px;background:#2
 <!-- HOME -->
 <div id="home">
 <div class="header">
-<div>Total Balance</div>
-<div class="balance" id="totalMain">₹0</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <img src="logo.png" width="60">
+    <div>
+      <div style="font-weight:bold;font-size:20px;">Expense Tracker</div>
+      <div style="font-size:15px;opacity:.8;">empowering every penny</div>
+    </div>
+  </div>
+  <div class="balance" id="totalMain">₹0</div>
 </div>
 
 <div class="container">
 
 <div class="card">
 <div class="accounts">
-<div class="acc">Bank<br><b id="bankBal">₹0</b></div>
-<div class="acc">Wallet<br><b id="walletBal">₹0</b></div>
-<div class="acc">Credit<br><b id="creditBal">₹0</b></div>
+ <div class="acc">
+    <span>Bank</span>
+    <b style="color:#16a34a" id="bankBal">₹0</b>
+  </div>
+  <div class="acc">
+    <span>Wallet</span>
+    <b style="color:#2563eb" id="walletBal">₹0</b>
+  </div>
+  <div class="acc">
+    <span>Credit</span>
+    <b style="color:#dc2626" id="creditBal">₹0</b>
+  </div>
 </div>
 </div>
 
@@ -212,7 +232,20 @@ function render(){
  bankBal.innerText='₹'+balances.bank;
  walletBal.innerText='₹'+balances.wallet;
  creditBal.innerText='₹'+balances.credit;
- entries.innerHTML=data.slice(0,6).map(e=>`<div class="entry"><div>${e.category}</div><div>₹${e.amount}</div></div>`).join('');
+ entries.innerHTML = data.slice(0,6).map(e=>{
+ let color = (e.type==='income'||e.type==='loan_return') ? 'green' : 'red';
+
+ return `
+ <div class="entry">
+   <div>
+     <div>${e.category}</div>
+     <small>${e.source}</small>
+   </div>
+   <div style="color:${color};font-weight:bold">
+     ₹${e.amount}
+   </div>
+ </div>`;
+}).join('');
 }
 
 function generateStatement(){
@@ -239,7 +272,6 @@ function downloadPDF(){
 
  let balance=0;
  let m=stmtMonth.value;
-
  data.filter(e=>e.date.startsWith(m)).forEach(e=>{
   let debit='',credit='';
   if(e.type==='income'||e.type==='loan_return'){
@@ -247,7 +279,6 @@ function downloadPDF(){
   } else {
     debit=e.amount; balance-=e.amount;
   }
-
   doc.text(e.date.substring(0,10),10,y);
   doc.text(e.category.substring(0,15),40,y);
   doc.text(debit?debit.toString():'-',120,y);
