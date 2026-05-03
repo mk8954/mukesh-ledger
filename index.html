@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Expense Tracker Pro</title>
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#065f46">
+
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+:root { --primary: #065f46; --secondary: #1e3a8a; --bg: #fcfcfc; --text: #1e293b; --muted: #64748b; --red: #ef4444; --green: #22c55e; }
+* { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 100px; }
+
+/* Original Header & Logo Styling */
+.header { padding: 20px 15px; background: white; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; z-index: 100; height: 80px; }
+.header img { height: 100px; width: 60px; border-radius: 8px; object-fit: contain; }
+.header-text b { color: var(--primary); font-size: 20px; display: block; line-height: 1.2; }
+.header-text small { color: var(--muted); font-size: 11px; }
+
+/* Original Dashboard Styling */
+.balance-card { margin: 15px; padding: 25px; background: linear-gradient(135deg, #1e3a8a, #6d28d9); border-radius: 20px; color: white; position: relative; overflow: hidden; }
+.sub-row { background: white; margin: -30px 25px 0; padding: 18px; border-radius: 15px; display: flex; box-shadow: 0 8px 20px rgba(0,0,0,0.05); position: relative; z-index: 10; text-align: center; }
+.sub-row > div { flex: 1; border-right: 1px solid #f1f5f9; }
+.sub-row > div:last-child { border-right: none; }
+.sub-row span { font-size: 10px; color: var(--muted); display: block; margin-bottom: 3px; }
+
+/* Original Nav Styling */
+.nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0; box-shadow: 0 -4px 15px rgba(0,0,0,0.04); border-radius: 20px 20px 0 0; z-index: 1000; }
+.nav-item { text-align: center; font-size: 10px; color: #94a3b8; flex: 1; cursor: pointer; }
+.nav-item.active { color: var(--primary); font-weight: 700; }
+.nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+
+/* Original Cards & Forms Styling */
+.hidden { display: none !important; }
+.card { background: white; margin: 15px; padding: 25px; border-radius: 20px; border: 1px solid #f1f5f9; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+.btn-main { width: 100%; padding: 16px; border: none; border-radius: 14px; background: var(--primary); color: white; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 10px; }
+.input-block { margin-bottom: 20px; }
+.input-label { display: block; font-size: 11px; font-weight: 800; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.full-input { width: 100%; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 15px; outline: none; }
+.amt-row { display: flex; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0 15px; }
+.amt-symbol { font-weight: 800; font-size: 18px; margin-right: 10px; color: var(--text); }
+.amt-field { border: none; background: transparent; padding: 14px 0; font-size: 18px; font-weight: 700; width: 100%; outline: none; }
+
+/* Original Segmented Control styling */
+.segmented { display: flex; background: #e2e8f0; margin: 15px; padding: 4px; border-radius: 12px; position: relative; }
+.seg-btn { flex: 1; z-index: 2; padding: 10px 0; text-align: center; font-size: 11px; font-weight: 700; color: var(--muted); border: none; background: transparent; cursor: pointer; }
+.seg-btn.active { color: var(--text); }
+.seg-slider { position: absolute; width: calc(20% - 4px); height: calc(100% - 8px); background: white; border-radius: 9px; transition: 0.3s; z-index: 1; }
+
+/* Original Tables Styling */
+.table-wrapper { overflow-x: auto; margin: 15px; border-radius: 15px; border: 1px solid #eee; background: white; }
+table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 580px; }
+th { background: var(--primary); color: white; padding: 12px 10px; text-align: left; }
+td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
+
+/* Styles for the new Recent Transactions section */
+.recent-item {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 12px 15px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #f1f5f9;
+}
+.icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 18px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <img src="logo.png" alt="Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2953/2953536.png'">
+    <div class="header-text"><b>Expense Tracker</b><small>empowering every penny.</small></div>
+</div>
+
+<div id="scr-home">
+    <div class="balance-card">
+        <span style="font-size:13px; opacity:0.8">Total Balance</span>
+        <h2 id="hTotal" style="margin:8px 0 0; font-size:32px">₹ 0.00</h2>
+    </div>
+    <div class="sub-row">
+        <div><span>Bank</span><b id="hBank" style="display:block; color:var(--green)">₹ 0</b></div>
+        <div><span>Wallet</span><b id="hWallet" style="display:block; color:var(--secondary)">₹ 0</b></div>
+        <div><span>Credit</span><b id="hCredit" style="display:block; color:var(--green)">₹ 0</b></div>
+    </div>
+    <div style="padding:25px 15px 10px; font-weight:800; font-size:16px;">Quick Actions</div>
+    <div style="display:flex; justify-content:space-around; padding:10px;">
+        <div onclick="openForm('expense')" style="text-align:center"><div style="background:var(--red); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:24px; margin:0 auto 5px">−</div><small>Expense</small></div>
+        <div onclick="openForm('income')" style="text-align:center"><div style="background:var(--green); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:24px; margin:0 auto 5px">+</div><small>Income</small></div>
+        <div onclick="showTab('scr-credit')" style="text-align:center"><div style="background:var(--secondary); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:20px; margin:0 auto 5px">₹</div><small>Credit</small></div>
+        <div onclick="openForm('transfer')" style="text-align:center"><div style="background:#8b5cf6; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:20px; margin:0 auto 5px">⇄</div><small>Transfer</small></div>
+    </div>
+
+    <div style="padding:25px 15px 5px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight:800; font-size:16px;">Recent Transactions</span>
+        <span onclick="showTab('scr-stmt')" style="color: var(--secondary); font-size: 12px; font-weight: 700;">View All</span>
+    </div>
+    <div id="recent-list" style="padding: 0 15px 20px;">
+        </div>
+</div>
+
+<div id="scr-credit" class="hidden">
+    <div class="segmented">
+        <div id="seg-slide" class="seg-slider" style="transform:translateX(0); width: 19%;"></div>
+        <button class="seg-btn active" onclick="moveSeg(0,'issued')">Issued</button>
+        <button class="seg-btn" onclick="moveSeg(1,'taken')">Taken</button>
+        <button class="seg-btn" onclick="moveSeg(2,'return')">Return</button>
+        <button class="seg-btn" onclick="moveSeg(3,'payback')">Payback</button>
+        <button class="seg-btn" onclick="moveSeg(4,'history')">History</button>
+    </div>
+    <div id="credit-content">
+        <div class="card" id="credit-form">
+            <h3 id="cTitle" style="margin-top:0">Issue Credit</h3>
+            <div class="input-block"><label class="input-label">Date</label><input type="date" id="cDate" class="full-input" value="2026-05-01"></div>
+            <div class="input-block"><label class="input-label">Name</label><input type="text" id="cName" class="full-input" placeholder="Name"></div>
+            <div class="input-block"><label class="input-label">Amount</label><div class="amt-row"><span id="cSym" class="amt-symbol">₹</span><input type="number" id="cAmt" class="amt-field" placeholder="0.00"></div></div>
+            <div class="input-block"><label class="input-label">Account</label><select id="cSrc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option></select></div>
+            <button class="btn-main" onclick="saveCredit()">Save Record</button>
+        </div>
+        <div id="credit-history" class="hidden">
+             <div class="table-wrapper">
+                <table style="min-width: 400px;">
+                    <thead><tr><th>Date</th><th>Person</th><th>Type</th><th>Amount</th></tr></thead>
+                    <tbody id="creditHistoryBody"></tbody>
+                </table>
+             </div>
+        </div>
+    </div>
+</div>
+
+<div id="scr-backup" class="hidden">
+    <div class="card">
+        <h3>Backup Data</h3>
+        <p style="font-size: 12px; color: var(--muted);">Download your ledger as a JSON file to keep it safe.</p>
+        <button class="btn-main" onclick="downloadBackup()">💾 Download JSON</button>
+    </div>
+    <div class="card">
+        <h3>Restore Data</h3>
+        <p style="font-size: 12px; color: var(--muted);">Upload a previously saved JSON file to restore your data.</p>
+        <input type="file" id="importFile" class="full-input" accept=".json" style="margin-bottom: 10px;">
+        <button class="btn-main" style="background: #f59e0b;" onclick="restoreBackup()">🔄 Restore Backup</button>
+    </div>
+</div>
+
+<div id="scr-form" class="hidden">
+    <div class="card">
+        <h3 id="fTitle" style="margin-top:0">Entry</h3>
+        <div id="transfer-box" class="hidden">
+            <div class="input-block"><label class="input-label">From</label><select id="fFrom" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div>
+            <div class="input-block"><label class="input-label">To</label><select id="fTo" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div>
+        </div>
+        <div class="input-block"><label class="input-label">Date</label><input type="date" id="fDate" class="full-input" value="2026-05-01"></div>
+        <div class="input-block"><label class="input-label">Amount</label><div class="amt-row"><span id="fSym" class="amt-symbol">₹</span><input type="number" id="fAmt" class="amt-field" placeholder="0.00"></div></div>
+        <div id="fMeta"><div class="input-block"><label class="input-label">Particulars</label><input type="text" id="fDesc" class="full-input" placeholder="Details"></div><div class="input-block"><label class="input-label">Account</label><select id="fSrc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div></div>
+        <button class="btn-main" onclick="saveEntry()">Save Record</button>
+        <button class="btn-main" style="background:#f1f5f9; color:var(--muted); margin-top:10px;" onclick="showTab('scr-home')">Cancel</button>
+    </div>
+</div>
+
+<div id="scr-set" class="hidden">
+    <div class="card" style="border:2px solid var(--secondary)">
+        <h3>Setup Balances</h3>
+        <div class="input-block"><label class="input-label">Bank</label><input type="number" id="iBank" class="full-input"></div>
+        <div class="input-block"><label class="input-label">Wallet</label><input type="number" id="iWallet" class="full-input"></div>
+        <div class="input-block"><label class="input-label">Credit</label><input type="number" id="iCredit" class="full-input"></div>
+        <button class="btn-main" style="background:var(--secondary)" onclick="initData()">Set All</button>
+    </div>
+    <div class="card">
+        <h3>Manual Adjustment</h3>
+        <div class="input-block"><label class="input-label">Select Account</label><select id="aAcc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div>
+        <div class="input-block"><label class="input-label">Adjustment (±)</label><input type="number" id="aAmt" class="full-input" placeholder="e.g. -10"></div>
+        <div class="input-block"><label class="input-label">Reason</label><input type="text" id="aReason" class="full-input"></div>
+        <button class="btn-main" style="background:#8b5cf6" onclick="doAdjust()">Apply</button>
+    </div>
+</div>
+
+<div id="scr-stmt" class="hidden">
+    <div style="padding:15px; display:flex; gap:10px;"><input type="month" id="stmtMonth" value="2026-05" class="full-input"><button class="btn-main" onclick="renderStmt()" style="margin:0; flex:1">Render</button></div>
+    <div style="padding:0 15px"><button class="btn-main" style="background:var(--red)" onclick="exportPDF()">📄 Download PDF</button></div>
+    <div class="table-wrapper">
+        <table id="mainTable">
+            <thead>
+                <tr>
+                    <th style="padding:10px">Date</th>
+                    <th>Particulars</th>
+                    <th>Type</th>
+                    <th>Debit</th>
+                    <th>Credit</th>
+                    <th>Balance</th>
+                </tr>
+            </thead>
+            <tbody id="stmtBody">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="nav">
+    <div class="nav-item active" id="n-home" onclick="showTab('scr-home')"><span class="nav-icon">🏠</span>Home</div>
+    <div class="nav-item" id="n-stmt" onclick="showTab('scr-stmt')"><span class="nav-icon">📊</span>Stmt</div>
+    <div class="nav-item" id="n-credit" onclick="showTab('scr-credit')"><span class="nav-icon">💸</span>Credit</div>
+    <div class="nav-item" id="n-backup" onclick="showTab('scr-backup')"><span class="nav-icon">☁️</span>Backup</div>
+    <div class="nav-item" id="n-set" onclick="showTab('scr-set')"><span class="nav-icon">⚙️</span>Set</div>
+</div>
+
+<script>
+// Keep original variables
+let ledger = JSON.parse(localStorage.getItem('ledger') || '[]');
+let bal = JSON.parse(localStorage.getItem('bal') || '{"bank":0,"wallet":0,"credit":0}');
+let fMode = 'expense', cMode = 'issued';
+
+// Original showTab
+function showTab(id){
+    ['scr-home','scr-stmt','scr-credit','scr-backup','scr-set','scr-form'].forEach(s=>document.getElementById(s).classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    let nid = 'n-'+id.split('-')[1]; if(document.getElementById(nid)) document.getElementById(nid).classList.add('active');
+}
+
+// Original openForm
+function openForm(m){
+    fMode = m; document.getElementById('fTitle').innerText = m.toUpperCase();
+    document.getElementById('transfer-box').classList.toggle('hidden', m !== 'transfer');
+    document.getElementById('fMeta').classList.toggle('hidden', m === 'transfer');
+    document.getElementById('fSym').style.color = (m==='income') ? 'var(--green)' : 'var(--red)';
+    showTab('scr-form');
+}
+
+// Original moveSeg
+function moveSeg(i, t){
+    cMode = t; document.getElementById('seg-slide').style.transform = `translateX(${i * 100}%)`;
+    document.querySelectorAll('.seg-btn').forEach((b,idx)=>b.classList.toggle('active', idx===i));
+    if(t==='history'){
+        document.getElementById('credit-form').classList.add('hidden');
+        document.getElementById('credit-history').classList.remove('hidden');
+        renderCreditHistory();
+    } else {
+        document.getElementById('credit-form').classList.remove('hidden');
+        document.getElementById('credit-history').classList.add('hidden');
+        const mMap = {issued:'Issue Credit', taken:'Take Loan', return:'Receive Back', payback:'Pay Back'};
+        document.getElementById('cTitle').innerText = mMap[t];
+        document.getElementById('cSym').style.color = (t==='taken'||t==='return') ? 'var(--green)' : 'var(--red)';
+    }
+}
+
+// Original saveCredit
+function saveCredit(){
+    let a = +document.getElementById('cAmt').value, n = document.getElementById('cName').value, s = document.getElementById('cSrc').value, dt = document.getElementById('cDate').value;
+    if(!a || !n) return alert("Fill all fields");
+    ledger.unshift({type:cMode, amount:a, desc:n, src:s, date:dt});
+    if(cMode==='taken'||cMode==='return') bal[s]+=a; else bal[s]-=a;
+    save(); showTab('scr-home');
+}
+
+// Original saveEntry
+function saveEntry(){
+    let a = +document.getElementById('fAmt').value, dt = document.getElementById('fDate').value;
+    if(fMode==='transfer'){
+        let f = document.getElementById('fFrom').value, t = document.getElementById('fTo').value;
+        bal[f]-=a; bal[t]+=a; ledger.unshift({type:'transfer', amount:a, desc:`Transfer: ${f} to ${t}`, src:f, date:dt});
+    } else {
+        let d = document.getElementById('fDesc').value, s = document.getElementById('fSrc').value;
+        ledger.unshift({type:fMode, amount:a, desc:d, src:s, date:dt});
+        if(fMode==='income') bal[s]+=a; else bal[s]-=a;
+    }
+    save(); showTab('scr-home');
+}
+
+// Original initData
+function initData(){
+    bal.bank = +document.getElementById('iBank').value; bal.wallet = +document.getElementById('iWallet').value; bal.credit = +document.getElementById('iCredit').value;
+    save(); alert("Balances Initialized!"); showTab('scr-home');
+}
+
+// Original doAdjust
+function doAdjust(){
+    let a = +document.getElementById('aAmt').value, r = document.getElementById('aReason').value, s = document.getElementById('aAcc').value;
+    bal[s]+=a; ledger.unshift({type:'adjustment', amount:Math.abs(a), desc:'ADJ: '+r, src:s, date:new Date().toISOString().split('T')[0]});
+    save(); showTab('scr-home');
+}
+
+// Keep original save logic
+function save(){ 
+    localStorage.setItem('ledger', JSON.stringify(ledger)); 
+    localStorage.setItem('bal', JSON.stringify(bal)); 
+    render(); // Update everything
+}
+
+// Updated render function to show Rupee symbol and call the new recent list
+function render(){
+    // Update dashboard with formatting and symbol
+    document.getElementById('hTotal').innerText = '₹ '+(bal.bank+bal.wallet).toLocaleString('en-IN',{minimumFractionDigits:2});
+    document.getElementById('hBank').innerText = '₹ '+bal.bank.toLocaleString();
+    document.getElementById('hWallet').innerText = '₹ '+bal.wallet.toLocaleString();
+    document.getElementById('hCredit').innerText = '₹ '+bal.credit.toLocaleString();
+
+    // Call new home history function
+    renderRecent(); 
+}
+
+// Original fmt
+function fmt(iso){
+    const d = new Date(iso), m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${String(d.getDate()).padStart(2,'0')} ${m[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// Updated renderStmt to use Rupee Symbol
+function renderStmt(){
+    const sel = document.getElementById('stmtMonth').value; 
+    let b = 0, html = "";
+
+    // 1. Filter by month
+    // 2. We use .map to attach the original index so we can preserve entry order
+    const filteredData = ledger
+        .map((item, index) => ({ ...item, originalIndex: index }))
+        .filter(e => e.date.startsWith(sel))
+        .sort((a, b) => {
+            // First: Sort by Date
+            if (a.date !== b.date) {
+                return a.date.localeCompare(b.date);
+            }
+            // Second: If date is same, show the one entered first (higher index in unshifted array)
+            return b.originalIndex - a.originalIndex;
+        });
+
+    filteredData.forEach(e => {
+        let isIn = ['income','taken','return'].includes(e.type);
+        if(e.type === 'adjustment' && e.amount > 0) isIn = true;
+
+        b = isIn ? b + e.amount : b - e.amount;
+
+        html += `<tr>
+            <td style="padding:10px">${fmt(e.date)}</td>
+            <td>${e.desc}</td>
+            <td>${e.type.toUpperCase()}</td>
+            <td style="color:var(--red)">${isIn ? '-' : '₹' + e.amount.toFixed(2)}</td>
+            <td style="color:var(--green)">${isIn ? '₹' + e.amount.toFixed(2) : '-'}</td>
+            <td>₹${b.toFixed(2)}</td>
+        </tr>`;
+    });
+    document.getElementById('stmtBody').innerHTML = html || "<tr><td colspan='6' style='text-align:center; padding:20px;'>No transactions found.</td></tr>";
+}
+
+
+// Original renderCreditHistory
+function renderCreditHistory(){
+    let html = "";
+    ledger.filter(e=>['issued','taken','return','payback'].includes(e.type)).forEach(e=>{
+        html += `<tr><td>${fmt(e.date)}</td><td>${e.desc}</td><td>${e.type.toUpperCase()}</td><td>₹${e.amount}</td></tr>`;
+    });
+    document.getElementById('creditHistoryBody').innerHTML = html || "<tr><td colspan='4'>No history</td></tr>";
+}
+
+// NEW: Function to render the last 5 transactions on the home screen
+function renderRecent() {
+    const recentList = document.getElementById('recent-list');
+    if (ledger.length === 0) {
+        recentList.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--muted); font-size: 13px;">No transactions added yet.</div>`;
+        return;
+    }
+
+    const latestItems = ledger.slice(0, 5);
+    let html = "";
+    latestItems.forEach(e => {
+        const isPlus = ['income', 'taken', 'return'].includes(e.type) || (e.type === 'adjustment' && ledger.find(x => x === e).amount > 0);
+        const icon = e.type === 'expense' ? '💸' : e.type === 'income' ? '💰' : e.type === 'transfer' ? '⇄' : '🏦';
+        const bgColor = isPlus ? '#dcfce7' : '#fee2e2';
+        const amountColor = isPlus ? 'var(--green)' : 'var(--red)';
+
+        html += `
+            <div class="recent-item">
+                <div class="icon-circle" style="background: ${bgColor};">
+                    ${icon}
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 700; font-size: 14px; color: var(--text);">${e.desc}</div>
+                    <div style="font-size: 11px; color: var(--muted);">${fmt(e.date)} • ${e.src.toUpperCase()}</div>
+                </div>
+                <div style="text-align: right; font-weight: 800; font-size: 14px; color: ${amountColor};">
+                    ${isPlus ? '+' : '-'} ₹${e.amount.toLocaleString('en-IN')}
+                </div>
+            </div>
+        `;
+    });
+    recentList.innerHTML = html;
+}
+
+// Original downloadBackup
+function downloadBackup() {
+    const dataStr = JSON.stringify({ ledger, bal });
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ledger_backup.json";
+    link.click();
+}
+
+// Original restoreBackup
+function restoreBackup() {
+    const file = document.getElementById('importFile').files[0];
+    if (!file) return alert("Select a file first");
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const imported = JSON.parse(e.target.result);
+            ledger = imported.ledger; bal = imported.bal;
+            save(); alert("Restore Complete!");
+        } catch(err) { alert("Invalid File Format"); }
+    };
+    reader.readAsText(file);
+}
+
+// Original exportPDF
+function exportPDF(){
+    const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text("Statement", 14, 15);
+    doc.autoTable({ html: '#mainTable', startY: 20, theme: 'grid', headStyles:{fillColor:[6,95,70]} });
+    doc.save("Statement.pdf");
+}
+
+// Original installation logic
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log("Install available");
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+    });
+  }
+}
+
+// Initial Call to render data on page load
+render();
+</script>
+</body>
+</html>
