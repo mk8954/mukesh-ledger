@@ -24,7 +24,14 @@ body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 100
 
 /* Original Header & Logo Styling */
 .header { padding: 20px 15px; background: white; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; z-index: 100; height: 80px; }
-.header img { height: 100px; width: 60px; border-radius: 8px; object-fit: contain; }
+.header img {
+  height: 70px;
+  width: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f1f5f9;
+  padding: 5px;
+}
 .header-text b { color: var(--primary); font-size: 20px; display: block; line-height: 1.2; }
 .header-text small { color: var(--muted); font-size: 11px; }
 
@@ -84,24 +91,53 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
     margin-right: 12px;
     font-size: 18px;
 }
+.card-logo{
+  position:absolute;
+  top:15px;
+  right:15px;
+  width:60px;
+  opacity:0.9;
+}
+.screen {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.hidden {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+}
+.spinner {
+    width: 100px;
+    height: 100px;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid #065f46;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 </style>
 </head>
 <body>
 
 <div class="header">
-    <img src="logo.png" alt="Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2953/2953536.png'">
-    <div class="header-text"><b>Expense Tracker</b><small>empowering every penny.</small></div>
+    <img src="logo-header.png" alt="Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2953/2953536.png'">
+    <div class="header-text"><b>Expense Tracker</b><small>Empowering Every Penny.</small></div>
 </div>
 
 <div id="scr-home">
     <div class="balance-card">
+    	<img src="logo.png" class="card-logo">
         <span style="font-size:13px; opacity:0.8">Total Balance</span>
         <h2 id="hTotal" style="margin:8px 0 0; font-size:32px">₹ 0.00</h2>
     </div>
     <div class="sub-row">
         <div><span>Bank</span><b id="hBank" style="display:block; color:var(--green)">₹ 0</b></div>
         <div><span>Wallet</span><b id="hWallet" style="display:block; color:var(--secondary)">₹ 0</b></div>
-        <div><span>Credit</span><b id="hCredit" style="display:block; color:var(--green)">₹ 0</b></div>
+        <div><span>Credit Card</span><b id="hCredit" style="display:block; color:var(--green)">₹ 0</b></div>
     </div>
     <div style="padding:25px 15px 10px; font-weight:800; font-size:16px;">Quick Actions</div>
     <div style="display:flex; justify-content:space-around; padding:10px;">
@@ -120,6 +156,10 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
 </div>
 
 <div id="scr-credit" class="hidden">
+	<div class="sub-row">
+	<div><span>Total Given:</span><b id="cGiven" style="display:block; color:var(--green)">₹ 0</b></div>
+    <div><span>Total Taken:</span><b id="cTaken" style="display:block; color:var(--red)">₹ 0</b></div>
+	</div>
     <div class="segmented">
         <div id="seg-slide" class="seg-slider" style="transform:translateX(0); width: 19%;"></div>
         <button class="seg-btn active" onclick="moveSeg(0,'issued')">Issued</button>
@@ -131,7 +171,7 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
     <div id="credit-content">
         <div class="card" id="credit-form">
             <h3 id="cTitle" style="margin-top:0">Issue Credit</h3>
-            <div class="input-block"><label class="input-label">Date</label><input type="date" id="cDate" class="full-input" value="2026-05-01"></div>
+            <div class="input-block"><label class="input-label">Date</label><input type="date" id="cDate" class="full-input" value=""></div>
             <div class="input-block"><label class="input-label">Name</label><input type="text" id="cName" class="full-input" placeholder="Name"></div>
             <div class="input-block"><label class="input-label">Amount</label><div class="amt-row"><span id="cSym" class="amt-symbol">₹</span><input type="number" id="cAmt" class="amt-field" placeholder="0.00"></div></div>
             <div class="input-block"><label class="input-label">Account</label><select id="cSrc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option></select></div>
@@ -169,7 +209,7 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
             <div class="input-block"><label class="input-label">From</label><select id="fFrom" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div>
             <div class="input-block"><label class="input-label">To</label><select id="fTo" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div>
         </div>
-        <div class="input-block"><label class="input-label">Date</label><input type="date" id="fDate" class="full-input" value="2026-05-01"></div>
+        <div class="input-block"><label class="input-label">Date</label><input type="date" id="fDate" class="full-input" value=""></div>
         <div class="input-block"><label class="input-label">Amount</label><div class="amt-row"><span id="fSym" class="amt-symbol">₹</span><input type="number" id="fAmt" class="amt-field" placeholder="0.00"></div></div>
         <div id="fMeta"><div class="input-block"><label class="input-label">Particulars</label><input type="text" id="fDesc" class="full-input" placeholder="Details"></div><div class="input-block"><label class="input-label">Account</label><select id="fSrc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div></div>
         <button class="btn-main" onclick="saveEntry()">Save Record</button>
@@ -195,7 +235,7 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
 </div>
 
 <div id="scr-stmt" class="hidden">
-    <div style="padding:15px; display:flex; gap:10px;"><input type="month" id="stmtMonth" value="2026-05" class="full-input"><button class="btn-main" onclick="renderStmt()" style="margin:0; flex:1">Render</button></div>
+    <div style="padding:15px; display:flex; gap:10px;"><input type="month" id="stmtMonth" value="2026-05" class="full-input"><button class="btn-main" onclick="renderStmt()" style="margin:0; flex:1">Generate</button></div>
     <div style="padding:0 15px"><button class="btn-main" style="background:var(--red)" onclick="exportPDF()">📄 Download PDF</button></div>
     <div class="table-wrapper">
         <table id="mainTable">
@@ -222,7 +262,11 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
     <div class="nav-item" id="n-backup" onclick="showTab('scr-backup')"><span class="nav-icon">☁️</span>Backup</div>
     <div class="nav-item" id="n-set" onclick="showTab('scr-set')"><span class="nav-icon">⚙️</span>Set</div>
 </div>
-
+<div id="loader" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:9999;visibility:hidden;opacity:0;transition:0.3s;">
+    <div class="spinner"></div>
+    <img src="logo.png" style="width:80px; margin-top:-70px;">
+    <p style="margin-top:15px; font-weight:600; color:#065f46;">Processing...</p>
+</div>
 <script>
 // Keep original variables
 let ledger = JSON.parse(localStorage.getItem('ledger') || '[]');
@@ -231,10 +275,24 @@ let fMode = 'expense', cMode = 'issued';
 
 // Original showTab
 function showTab(id){
-    ['scr-home','scr-stmt','scr-credit','scr-backup','scr-set','scr-form'].forEach(s=>document.getElementById(s).classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
+    const screens = ['scr-home','scr-stmt','scr-credit','scr-backup','scr-set','scr-form'];
+
+    screens.forEach(s=>{
+        const el = document.getElementById(s);
+        el.classList.add('hidden');
+    });
+
+    setTimeout(()=>{
+       document.getElementById(id).classList.remove('hidden');
+
+	if(id === 'scr-credit'){
+   	   setTodayDates(); // 👈 reuse same function
+	}
+    },150);
+
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    let nid = 'n-'+id.split('-')[1]; if(document.getElementById(nid)) document.getElementById(nid).classList.add('active');
+    let nid = 'n-'+id.split('-')[1];
+    if(document.getElementById(nid)) document.getElementById(nid).classList.add('active');
 }
 
 // Original openForm
@@ -243,7 +301,8 @@ function openForm(m){
     document.getElementById('transfer-box').classList.toggle('hidden', m !== 'transfer');
     document.getElementById('fMeta').classList.toggle('hidden', m === 'transfer');
     document.getElementById('fSym').style.color = (m==='income') ? 'var(--green)' : 'var(--red)';
-    showTab('scr-form');
+    setTodayDates();
+	showTab('scr-form');
 }
 
 // Original moveSeg
@@ -269,7 +328,10 @@ function saveCredit(){
     if(!a || !n) return alert("Fill all fields");
     ledger.unshift({type:cMode, amount:a, desc:n, src:s, date:dt});
     if(cMode==='taken'||cMode==='return') bal[s]+=a; else bal[s]-=a;
-    save(); showTab('scr-home');
+   	save();
+   	resetForm();
+	alert("✅ Credit Saved");
+	showTab('scr-home');
 }
 
 // Original saveEntry
@@ -283,7 +345,14 @@ function saveEntry(){
         ledger.unshift({type:fMode, amount:a, desc:d, src:s, date:dt});
         if(fMode==='income') bal[s]+=a; else bal[s]-=a;
     }
-    save(); showTab('scr-home');
+    showLoader("Saving...");
+setTimeout(()=>{
+    save();
+    resetForm();
+    hideLoader();
+    alert("✅ Entry Saved");
+    showTab('scr-home');
+},600);
 }
 
 // Original initData
@@ -315,6 +384,7 @@ function render(){
     document.getElementById('hCredit').innerText = '₹ '+bal.credit.toLocaleString();
 
     // Call new home history function
+    renderCreditSummary();
     renderRecent(); 
 }
 
@@ -433,8 +503,23 @@ function restoreBackup() {
 
 // Original exportPDF
 function exportPDF(){
-    const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text("Statement", 14, 15);
-    doc.autoTable({ html: '#mainTable', startY: 20, theme: 'grid', headStyles:{fillColor:[6,95,70]} });
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("Expense Statement", 14, 15);
+
+    doc.setFontSize(10);
+    doc.text("Generated on: " + new Date().toLocaleDateString(), 14, 22);
+
+    doc.autoTable({
+        html: '#mainTable',
+        startY: 28,
+        theme: 'grid',
+        styles:{fontSize:8},
+        headStyles:{fillColor:[6,95,70]}
+    });
+
     doc.save("Statement.pdf");
 }
 
@@ -454,7 +539,45 @@ function installApp() {
     });
   }
 }
+function setTodayDates(){
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('fDate').value = today;
+    document.getElementById('cDate').value = today;
+}
+function renderCreditSummary(){
+    let given=0, taken=0;
 
+    ledger.forEach(e=>{
+        if(e.type==='issued') given+=e.amount;
+        if(e.type==='taken') taken+=e.amount;
+    });
+
+    document.getElementById('cGiven').innerText = given;
+    document.getElementById('cTaken').innerText = taken;
+}
+function resetForm(){
+    const today = new Date().toISOString().split('T')[0];
+
+    document.getElementById('fAmt').value = "";
+    document.getElementById('fDesc').value = "";
+    document.getElementById('fDate').value = today;
+
+    document.getElementById('cAmt').value = "";
+    document.getElementById('cName').value = "";
+    document.getElementById('cDate').value = today;
+}
+function showLoader(text="Processing..."){
+    const l = document.getElementById('loader');
+    l.style.visibility = "visible";
+    l.style.opacity = "1";
+    l.querySelector("p").innerText = text;
+}
+
+function hideLoader(){
+    const l = document.getElementById('loader');
+    l.style.opacity = "0";
+    setTimeout(()=>{ l.style.visibility="hidden"; },300);
+}
 // Initial Call to render data on page load
 render();
 </script>
