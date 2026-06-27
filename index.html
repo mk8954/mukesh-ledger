@@ -71,7 +71,7 @@ table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 580p
 th { background: var(--primary); color: white; padding: 12px 10px; text-align: left; }
 td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
 
-/* Styles for the new Recent Transactions section */
+/* Styles for the Recent Transactions section */
 .recent-item {
     display: flex;
     align-items: center;
@@ -90,6 +90,7 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
     justify-content: center;
     margin-right: 12px;
     font-size: 18px;
+    flex-shrink: 0;
 }
 .card-logo{
   position:absolute;
@@ -119,6 +120,19 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* New: bottom sheet modal (used for Edit Transaction + Credit Action) */
+.sheet-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.55); z-index: 2000; display: flex; align-items: flex-end; }
+.sheet-card { width: 100%; margin: 0; border-radius: 20px 20px 0 0; max-height: 88vh; overflow-y: auto; animation: slideUp 0.25s ease; }
+@keyframes slideUp { from{ transform:translateY(40px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+
+/* New: tappable row affordance (chevron) for People / Recent lists */
+.tap-row { cursor: pointer; }
+.tap-chevron { color: #cbd5e1; font-size: 20px; margin-left: 8px; flex-shrink: 0; }
+.edit-pencil { margin-left: 8px; color: var(--muted); font-size: 15px; padding: 6px; flex-shrink: 0; }
+
+/* New: opening/closing balance rows in statements */
+.bal-row td { background: #f8fafc; font-weight: 800; }
 </style>
 </head>
 <body>
@@ -151,16 +165,25 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
         <span style="font-weight:800; font-size:16px;">Recent Transactions</span>
         <span onclick="showTab('scr-stmt')" style="color: var(--secondary); font-size: 12px; font-weight: 700;">View All</span>
     </div>
+    <div style="padding:0 15px 5px; font-size:11px; color:var(--muted);">Tap any entry or the ✏️ to edit/delete</div>
     <div id="recent-list" style="padding: 0 15px 20px;">
         </div>
 </div>
 
 <div id="scr-credit" class="hidden">
 	<div class="sub-row">
-	<div><span>Total Given:</span><b id="cGiven" style="display:block; color:var(--green)">₹ 0</b></div>
-    <div><span>Total Taken:</span><b id="cTaken" style="display:block; color:var(--red)">₹ 0</b></div>
+	<div><span>Outstanding (Given):</span><b id="cGiven" style="display:block; color:var(--green)">₹ 0</b></div>
+    <div><span>Outstanding (Taken):</span><b id="cTaken" style="display:block; color:var(--red)">₹ 0</b></div>
 	</div>
-    <div class="segmented">
+
+    <div style="padding:20px 15px 5px; font-weight:800; font-size:15px;">👥 People Who Owe You</div>
+    <div id="owedToMeList" style="padding:0 15px;"></div>
+
+    <div style="padding:20px 15px 5px; font-weight:800; font-size:15px;">🧾 People You Owe</div>
+    <div id="owedByMeList" style="padding:0 15px;"></div>
+
+    <div style="padding:20px 15px 5px; font-weight:800; font-size:14px; color:var(--muted);">Add New Record</div>
+    <div class="segmented" id="credit-segmented">
         <div id="seg-slide" class="seg-slider" style="transform:translateX(0); width: 19%;"></div>
         <button class="seg-btn active" onclick="moveSeg(0,'issued')">Issued</button>
         <button class="seg-btn" onclick="moveSeg(1,'taken')">Taken</button>
@@ -235,8 +258,15 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
 </div>
 
 <div id="scr-stmt" class="hidden">
-    <div style="padding:15px; display:flex; gap:10px;"><input type="month" id="stmtMonth" value="2026-05" class="full-input"><button class="btn-main" onclick="renderStmt()" style="margin:0; flex:1">Generate</button></div>
-    <div style="padding:0 15px"><button class="btn-main" style="background:var(--red)" onclick="exportPDF()">📄 Download PDF</button></div>
+    <div style="padding:15px 15px 0; font-weight:800; font-size:14px; color:var(--muted);">Select Account</div>
+    <div class="segmented" id="stmt-segmented">
+        <div id="stmtSeg-slide" class="seg-slider" style="transform:translateX(0); width: 33%;"></div>
+        <button class="seg-btn active" onclick="moveStmtSeg(0,'bank')">🏦 Bank</button>
+        <button class="seg-btn" onclick="moveStmtSeg(1,'wallet')">💵 Cash</button>
+        <button class="seg-btn" onclick="moveStmtSeg(2,'credit')">💳 Credit Card</button>
+    </div>
+    <div style="padding:0 15px; display:flex; gap:10px;"><input type="month" id="stmtMonth" class="full-input"><button class="btn-main" onclick="renderStmt()" style="margin:0; flex:1">Generate</button></div>
+    <div style="padding:15px 15px 0"><button class="btn-main" style="background:var(--red)" onclick="exportPDF()">📄 Download PDF</button></div>
     <div class="table-wrapper">
         <table id="mainTable">
             <thead>
@@ -267,13 +297,82 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
     <img src="logo.png" style="width:80px; margin-top:-70px;">
     <p style="margin-top:15px; font-weight:600; color:#065f46;">Processing...</p>
 </div>
+
+<!-- New: Edit Transaction bottom sheet (used by Recent Transactions, last 5 entries) -->
+<div id="editModal" class="sheet-overlay hidden">
+  <div class="card sheet-card">
+    <h3 style="margin-top:0">Edit Transaction</h3>
+    <div class="input-block"><label class="input-label">Date</label><input type="date" id="eDate" class="full-input"></div>
+    <div id="eTransferBox" class="hidden">
+        <div class="input-block"><label class="input-label">From</label><select id="eFrom" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div>
+        <div class="input-block"><label class="input-label">To</label><select id="eTo" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div>
+    </div>
+    <div id="eNameBox" class="input-block"><label class="input-label" id="eNameLabel">Particulars</label><input type="text" id="eDesc" class="full-input"></div>
+    <div class="input-block"><label class="input-label">Amount</label><div class="amt-row"><span class="amt-symbol">₹</span><input type="number" id="eAmt" class="amt-field"></div></div>
+    <div id="eAccBox" class="input-block"><label class="input-label">Account</label><select id="eSrc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div>
+    <button class="btn-main" onclick="saveEditedTransaction()">Save Changes</button>
+    <button class="btn-main" style="background:#fee2e2; color:var(--red);" onclick="deleteEditedTransaction()">🗑 Delete Entry</button>
+    <button class="btn-main" style="background:#f1f5f9; color:var(--muted);" onclick="closeEditModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- New: Credit settlement bottom sheet (tap a person under Credit tab) -->
+<div id="creditActionModal" class="sheet-overlay hidden">
+  <div class="card sheet-card">
+    <h3 id="caTitle" style="margin-top:0">Record Return</h3>
+    <p id="caSubtitle" style="color:var(--muted); font-size:13px; margin-top:-10px;"></p>
+    <div class="input-block"><label class="input-label">Date</label><input type="date" id="caDate" class="full-input"></div>
+    <div class="input-block"><label class="input-label">Amount</label><div class="amt-row"><span class="amt-symbol">₹</span><input type="number" id="caAmt" class="amt-field"></div></div>
+    <div class="input-block"><label class="input-label">Account</label><select id="caSrc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option></select></div>
+    <button class="btn-main" onclick="confirmCreditAction()">Save</button>
+    <button class="btn-main" style="background:#f1f5f9; color:var(--muted);" onclick="closeCreditAction()">Cancel</button>
+  </div>
+</div>
+
 <script>
-// Keep original variables
+// ============== Core state ==============
 let ledger = JSON.parse(localStorage.getItem('ledger') || '[]');
 let bal = JSON.parse(localStorage.getItem('bal') || '{"bank":0,"wallet":0,"credit":0}');
 let fMode = 'expense', cMode = 'issued';
+let stmtAcc = 'bank';
+let editingEntryId = null;
+let caPersonName = null, caMode = 'return';
 
-// Original showTab
+// Backfill IDs for any entries saved before this update, so Edit/Delete and
+// per-account statements work for old data too.
+(function backfillIds(){
+    let changed = false;
+    ledger.forEach(e=>{ if(!e.id){ e.id = genId(); changed = true; } });
+    if(changed) localStorage.setItem('ledger', JSON.stringify(ledger));
+})();
+
+function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+// Applies (sign=1) or reverses (sign=-1) an entry's effect on account balances.
+function applyEffect(effectArr, sign){
+    (effectArr||[]).forEach(({acc, delta})=>{ bal[acc] = (bal[acc]||0) + delta*sign; });
+}
+
+// Best-effort reconstruction of an entry's balance effect for legacy records
+// saved before this version (which lacked the explicit `effect` field).
+function guessDestFromDesc(desc){
+    const m = (desc||'').match(/to\s+(bank|wallet|credit)/i);
+    return m ? m[1].toLowerCase() : null;
+}
+function legacyEffectFor(e){
+    if(e.type === 'transfer'){
+        const to = e.dest || guessDestFromDesc(e.desc);
+        const arr = [{acc:e.src, delta:-e.amount}];
+        if(to) arr.push({acc:to, delta:e.amount});
+        return arr;
+    }
+    const isIn = ['income','taken','return'].includes(e.type) || (e.type==='adjustment' && e.amount>0);
+    return [{acc:e.src, delta: isIn ? e.amount : -e.amount}];
+}
+function effectFor(e){ return e.effect || legacyEffectFor(e); }
+
+// ============== Navigation ==============
 function showTab(id){
     const screens = ['scr-home','scr-stmt','scr-credit','scr-backup','scr-set','scr-form'];
 
@@ -286,7 +385,11 @@ function showTab(id){
        document.getElementById(id).classList.remove('hidden');
 
 	if(id === 'scr-credit'){
-   	   setTodayDates(); // 👈 reuse same function
+   	   setTodayDates();
+	   renderPeopleLists();
+	}
+	if(id === 'scr-stmt'){
+	   renderStmt();
 	}
     },150);
 
@@ -295,7 +398,6 @@ function showTab(id){
     if(document.getElementById(nid)) document.getElementById(nid).classList.add('active');
 }
 
-// Original openForm
 function openForm(m){
     fMode = m; document.getElementById('fTitle').innerText = m.toUpperCase();
     document.getElementById('transfer-box').classList.toggle('hidden', m !== 'transfer');
@@ -305,10 +407,9 @@ function openForm(m){
 	showTab('scr-form');
 }
 
-// Original moveSeg
 function moveSeg(i, t){
     cMode = t; document.getElementById('seg-slide').style.transform = `translateX(${i * 100}%)`;
-    document.querySelectorAll('.seg-btn').forEach((b,idx)=>b.classList.toggle('active', idx===i));
+    document.querySelectorAll('#credit-segmented .seg-btn').forEach((b,idx)=>b.classList.toggle('active', idx===i));
     if(t==='history'){
         document.getElementById('credit-form').classList.add('hidden');
         document.getElementById('credit-history').classList.remove('hidden');
@@ -322,117 +423,154 @@ function moveSeg(i, t){
     }
 }
 
-// Original saveCredit
+function moveStmtSeg(i, acc){
+    stmtAcc = acc;
+    document.getElementById('stmtSeg-slide').style.transform = `translateX(${i * 100}%)`;
+    document.querySelectorAll('#stmt-segmented .seg-btn').forEach((b,idx)=>b.classList.toggle('active', idx===i));
+    renderStmt();
+}
+
+// ============== Save: Credit (Issued/Taken/Return/Payback) ==============
 function saveCredit(){
-    let a = +document.getElementById('cAmt').value, n = document.getElementById('cName').value, s = document.getElementById('cSrc').value, dt = document.getElementById('cDate').value;
-    if(!a || !n) return alert("Fill all fields");
-    ledger.unshift({type:cMode, amount:a, desc:n, src:s, date:dt});
-    if(cMode==='taken'||cMode==='return') bal[s]+=a; else bal[s]-=a;
+    let a = +document.getElementById('cAmt').value, n = document.getElementById('cName').value.trim(), s = document.getElementById('cSrc').value, dt = document.getElementById('cDate').value;
+    if(!a || a<=0 || !n) return alert("Fill all fields");
+    const delta = (cMode==='taken'||cMode==='return') ? a : -a;
+    const entry = {id:genId(), type:cMode, amount:a, desc:n, src:s, date:dt, effect:[{acc:s, delta}]};
+    ledger.unshift(entry);
+    applyEffect(entry.effect, 1);
    	save();
    	resetForm();
 	alert("✅ Credit Saved");
 	showTab('scr-home');
 }
 
-// Original saveEntry
+// ============== Save: Expense / Income / Transfer ==============
 function saveEntry(){
     let a = +document.getElementById('fAmt').value, dt = document.getElementById('fDate').value;
+    if(!a || a<=0 || !dt) return alert("Enter a valid amount and date");
+    let entry;
     if(fMode==='transfer'){
         let f = document.getElementById('fFrom').value, t = document.getElementById('fTo').value;
-        bal[f]-=a; bal[t]+=a; ledger.unshift({type:'transfer', amount:a, desc:`Transfer: ${f} to ${t}`, src:f, date:dt});
+        if(f === t) return alert("From and To accounts must be different");
+        entry = {id:genId(), type:'transfer', amount:a, desc:`Transfer: ${cap(f)} to ${cap(t)}`, src:f, dest:t, date:dt, effect:[{acc:f,delta:-a},{acc:t,delta:a}]};
     } else {
-        let d = document.getElementById('fDesc').value, s = document.getElementById('fSrc').value;
-        ledger.unshift({type:fMode, amount:a, desc:d, src:s, date:dt});
-        if(fMode==='income') bal[s]+=a; else bal[s]-=a;
+        let d = document.getElementById('fDesc').value || cap(fMode), s = document.getElementById('fSrc').value;
+        const delta = fMode==='income' ? a : -a;
+        entry = {id:genId(), type:fMode, amount:a, desc:d, src:s, date:dt, effect:[{acc:s, delta}]};
     }
     showLoader("Saving...");
-setTimeout(()=>{
-    save();
-    resetForm();
-    hideLoader();
-    alert("✅ Entry Saved");
-    showTab('scr-home');
-},600);
+    setTimeout(()=>{
+        ledger.unshift(entry);
+        applyEffect(entry.effect, 1);
+        save();
+        resetForm();
+        hideLoader();
+        alert("✅ Entry Saved");
+        showTab('scr-home');
+    },600);
 }
 
-// Original initData
 function initData(){
-    bal.bank = +document.getElementById('iBank').value; bal.wallet = +document.getElementById('iWallet').value; bal.credit = +document.getElementById('iCredit').value;
+    // Route the initial setup through the ledger (as an adjustment entry) instead
+    // of silently overwriting `bal`. This keeps statement opening balances accurate
+    // for every future month, since they're reconstructed purely from ledger effects.
+    const targets = {bank:+document.getElementById('iBank').value, wallet:+document.getElementById('iWallet').value, credit:+document.getElementById('iCredit').value};
+    const today = new Date().toISOString().split('T')[0];
+    Object.keys(targets).forEach(acc=>{
+        const delta = targets[acc] - (bal[acc]||0);
+        if(Math.abs(delta) > 0.001){
+            const entry = {id:genId(), type:'adjustment', amount:Math.abs(delta), sign:(delta<0?-1:1), desc:'ADJ: Initial Setup', src:acc, date:today, effect:[{acc, delta}]};
+            ledger.unshift(entry);
+            applyEffect(entry.effect, 1);
+        }
+    });
     save(); alert("Balances Initialized!"); showTab('scr-home');
 }
 
-// Original doAdjust
 function doAdjust(){
     let a = +document.getElementById('aAmt').value, r = document.getElementById('aReason').value, s = document.getElementById('aAcc').value;
-    bal[s]+=a; ledger.unshift({type:'adjustment', amount:Math.abs(a), desc:'ADJ: '+r, src:s, date:new Date().toISOString().split('T')[0]});
+    if(!a) return alert("Enter an amount");
+    const entry = {id:genId(), type:'adjustment', amount:Math.abs(a), sign:(a<0?-1:1), desc:'ADJ: '+(r||'-'), src:s, date:new Date().toISOString().split('T')[0], effect:[{acc:s, delta:a}]};
+    ledger.unshift(entry);
+    applyEffect(entry.effect, 1);
     save(); showTab('scr-home');
 }
 
-// Keep original save logic
-function save(){ 
-    localStorage.setItem('ledger', JSON.stringify(ledger)); 
-    localStorage.setItem('bal', JSON.stringify(bal)); 
-    render(); // Update everything
+// ============== Persistence + master render ==============
+function save(){
+    localStorage.setItem('ledger', JSON.stringify(ledger));
+    localStorage.setItem('bal', JSON.stringify(bal));
+    render();
 }
 
-// Updated render function to show Rupee symbol and call the new recent list
 function render(){
-    // Update dashboard with formatting and symbol
     document.getElementById('hTotal').innerText = '₹ '+(bal.bank+bal.wallet).toLocaleString('en-IN',{minimumFractionDigits:2});
     document.getElementById('hBank').innerText = '₹ '+bal.bank.toLocaleString();
     document.getElementById('hWallet').innerText = '₹ '+bal.wallet.toLocaleString();
     document.getElementById('hCredit').innerText = '₹ '+bal.credit.toLocaleString();
 
-    // Call new home history function
     renderCreditSummary();
-    renderRecent(); 
+    renderPeopleLists();
+    renderRecent();
 }
 
-// Original fmt
 function fmt(iso){
     const d = new Date(iso), m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     return `${String(d.getDate()).padStart(2,'0')} ${m[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// Updated renderStmt to use Rupee Symbol
+// ============== Statement (Fix #1 + #3: per-account, balance carried forward) ==============
 function renderStmt(){
-    const sel = document.getElementById('stmtMonth').value; 
-    let b = 0, html = "";
+    const sel = document.getElementById('stmtMonth').value;
+    if(!sel) return;
+    const acc = stmtAcc;
 
-    // 1. Filter by month
-    // 2. We use .map to attach the original index so we can preserve entry order
-    const filteredData = ledger
-        .map((item, index) => ({ ...item, originalIndex: index }))
-        .filter(e => e.date.startsWith(sel))
-        .sort((a, b) => {
-            // First: Sort by Date
-            if (a.date !== b.date) {
-                return a.date.localeCompare(b.date);
-            }
-            // Second: If date is same, show the one entered first (higher index in unshifted array)
-            return b.originalIndex - a.originalIndex;
+    // Expand every ledger entry into the account-level effect(s) it caused.
+    // A transfer naturally produces one debit leg and one credit leg, so it
+    // shows up correctly on BOTH the source and destination account statements.
+    const accEntries = [];
+    ledger.forEach(e=>{
+        effectFor(e).forEach(f=>{
+            if(f.acc === acc) accEntries.push({date:e.date, desc:e.desc, type:e.type, delta:f.delta});
         });
+    });
 
-    filteredData.forEach(e => {
-        let isIn = ['income','taken','return'].includes(e.type);
-        if(e.type === 'adjustment' && e.amount > 0) isIn = true;
+    // Opening balance = net effect of everything dated before the selected month.
+    let opening = 0;
+    accEntries.forEach(x=>{ if(x.date.slice(0,7) < sel) opening += x.delta; });
 
-        b = isIn ? b + e.amount : b - e.amount;
+    const monthEntries = accEntries
+        .filter(x => x.date.slice(0,7) === sel)
+        .sort((a,b) => a.date.localeCompare(b.date));
 
+    let b = opening;
+    let html = `<tr class="bal-row"><td colspan="5" style="padding:10px">Opening Balance</td><td>₹${opening.toFixed(2)}</td></tr>`;
+
+    monthEntries.forEach(x=>{
+        b += x.delta;
+        const isIn = x.delta >= 0;
         html += `<tr>
-            <td style="padding:10px">${fmt(e.date)}</td>
-            <td>${e.desc}</td>
-            <td>${e.type.toUpperCase()}</td>
-            <td style="color:var(--red)">${isIn ? '-' : '₹' + e.amount.toFixed(2)}</td>
-            <td style="color:var(--green)">${isIn ? '₹' + e.amount.toFixed(2) : '-'}</td>
+            <td style="padding:10px">${fmt(x.date)}</td>
+            <td>${x.desc}</td>
+            <td>${x.type.toUpperCase()}</td>
+            <td style="color:var(--red)">${isIn ? '-' : '₹' + Math.abs(x.delta).toFixed(2)}</td>
+            <td style="color:var(--green)">${isIn ? '₹' + Math.abs(x.delta).toFixed(2) : '-'}</td>
             <td>₹${b.toFixed(2)}</td>
         </tr>`;
     });
-    document.getElementById('stmtBody').innerHTML = html || "<tr><td colspan='6' style='text-align:center; padding:20px;'>No transactions found.</td></tr>";
+
+    html += `<tr class="bal-row"><td colspan="5" style="padding:10px">Closing Balance</td><td>₹${b.toFixed(2)}</td></tr>`;
+
+    if(monthEntries.length === 0){
+        html = `<tr class="bal-row"><td colspan="5" style="padding:10px">Opening Balance</td><td>₹${opening.toFixed(2)}</td></tr>
+                <tr><td colspan="6" style="text-align:center; padding:20px;">No transactions this month.</td></tr>
+                <tr class="bal-row"><td colspan="5" style="padding:10px">Closing Balance</td><td>₹${opening.toFixed(2)}</td></tr>`;
+    }
+
+    document.getElementById('stmtBody').innerHTML = html;
 }
 
-
-// Original renderCreditHistory
+// ============== Credit History (raw list, unchanged behaviour) ==============
 function renderCreditHistory(){
     let html = "";
     ledger.filter(e=>['issued','taken','return','payback'].includes(e.type)).forEach(e=>{
@@ -441,7 +579,89 @@ function renderCreditHistory(){
     document.getElementById('creditHistoryBody').innerHTML = html || "<tr><td colspan='4'>No history</td></tr>";
 }
 
-// NEW: Function to render the last 5 transactions on the home screen
+// ============== Fix #2: Active credit tracking, grouped by person ==============
+function getPeopleSummary(){
+    const people = {};
+    ledger.forEach(e=>{
+        if(!['issued','taken','return','payback'].includes(e.type)) return;
+        const n = e.desc;
+        if(!people[n]) people[n] = {issued:0, returned:0, taken:0, paidback:0};
+        if(e.type==='issued') people[n].issued += e.amount;
+        if(e.type==='return') people[n].returned += e.amount;
+        if(e.type==='taken') people[n].taken += e.amount;
+        if(e.type==='payback') people[n].paidback += e.amount;
+    });
+    return people;
+}
+
+function personRow(name, amt, action){
+    const safeName = name.replace(/'/g, "\\'");
+    const color = action==='return' ? 'var(--green)' : 'var(--red)';
+    const hint = action==='return' ? 'Tap to record return' : 'Tap to pay back';
+    return `<div class="recent-item tap-row" onclick="openCreditAction('${safeName}','${action}',${amt})">
+        <div class="icon-circle" style="background:#eef2ff;">👤</div>
+        <div style="flex:1; min-width:0;">
+            <div style="font-weight:700; font-size:14px; color:var(--text);">${name}</div>
+            <div style="font-size:11px; color:var(--muted);">${hint}</div>
+        </div>
+        <div style="text-align:right; font-weight:800; font-size:14px; color:${color};">₹${amt.toLocaleString('en-IN')}</div>
+        <div class="tap-chevron">›</div>
+    </div>`;
+}
+
+function renderPeopleLists(){
+    const elGive = document.getElementById('owedToMeList'), elTake = document.getElementById('owedByMeList');
+    if(!elGive || !elTake) return;
+    const people = getPeopleSummary();
+    let owedToMeHtml = "", owedByMeHtml = "";
+    Object.keys(people).sort().forEach(name=>{
+        const p = people[name];
+        const netOwedToMe = p.issued - p.returned;
+        const netIOwe = p.taken - p.paidback;
+        if(netOwedToMe > 0.005) owedToMeHtml += personRow(name, +netOwedToMe.toFixed(2), 'return');
+        if(netIOwe > 0.005) owedByMeHtml += personRow(name, +netIOwe.toFixed(2), 'payback');
+    });
+    elGive.innerHTML = owedToMeHtml || `<div style="text-align:center; padding:15px; color:var(--muted); font-size:12px;">No active credit given right now.</div>`;
+    elTake.innerHTML = owedByMeHtml || `<div style="text-align:center; padding:15px; color:var(--muted); font-size:12px;">No active loans taken right now.</div>`;
+}
+
+function openCreditAction(name, action, maxAmt){
+    caPersonName = name; caMode = action;
+    document.getElementById('caTitle').innerText = action==='return' ? 'Record Return' : 'Pay Back';
+    document.getElementById('caSubtitle').innerText = (action==='return' ? 'From ' : 'To ') + name + ' • Outstanding: ₹' + maxAmt.toLocaleString('en-IN');
+    document.getElementById('caDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('caAmt').value = maxAmt;
+    document.getElementById('caSrc').value = 'bank';
+    document.getElementById('creditActionModal').classList.remove('hidden');
+}
+function closeCreditAction(){ document.getElementById('creditActionModal').classList.add('hidden'); }
+function confirmCreditAction(){
+    const a = +document.getElementById('caAmt').value;
+    const dt = document.getElementById('caDate').value;
+    const s = document.getElementById('caSrc').value;
+    if(!a || a<=0 || !dt) return alert("Enter a valid amount and date");
+    const delta = caMode==='return' ? a : -a;
+    const entry = {id:genId(), type:caMode, amount:a, desc:caPersonName, src:s, date:dt, effect:[{acc:s, delta}]};
+    ledger.unshift(entry);
+    applyEffect(entry.effect, 1);
+    save();
+    closeCreditAction();
+    alert("✅ Recorded");
+}
+
+function renderCreditSummary(){
+    let given=0, taken=0, returned=0, paidback=0;
+    ledger.forEach(e=>{
+        if(e.type==='issued') given += e.amount;
+        if(e.type==='taken') taken += e.amount;
+        if(e.type==='return') returned += e.amount;
+        if(e.type==='payback') paidback += e.amount;
+    });
+    document.getElementById('cGiven').innerText = '₹ ' + (given - returned).toLocaleString('en-IN');
+    document.getElementById('cTaken').innerText = '₹ ' + (taken - paidback).toLocaleString('en-IN');
+}
+
+// ============== Recent Transactions (Fix #4: tap/edit/delete) ==============
 function renderRecent() {
     const recentList = document.getElementById('recent-list');
     if (ledger.length === 0) {
@@ -452,30 +672,119 @@ function renderRecent() {
     const latestItems = ledger.slice(0, 5);
     let html = "";
     latestItems.forEach(e => {
-        const isPlus = ['income', 'taken', 'return'].includes(e.type) || (e.type === 'adjustment' && ledger.find(x => x === e).amount > 0);
-        const icon = e.type === 'expense' ? '💸' : e.type === 'income' ? '💰' : e.type === 'transfer' ? '⇄' : '🏦';
-        const bgColor = isPlus ? '#dcfce7' : '#fee2e2';
-        const amountColor = isPlus ? 'var(--green)' : 'var(--red)';
+        const isTransfer = e.type === 'transfer';
+        const eff = effectFor(e);
+        const isPlus = isTransfer ? null : eff[0].delta > 0;
+        const icon = e.type === 'expense' ? '💸' : e.type === 'income' ? '💰' : isTransfer ? '⇄' : '🏦';
+        const bgColor = isTransfer ? '#ede9fe' : (isPlus ? '#dcfce7' : '#fee2e2');
+        const amountColor = isTransfer ? 'var(--secondary)' : (isPlus ? 'var(--green)' : 'var(--red)');
+        const sign = isTransfer ? '' : (isPlus ? '+' : '-');
 
         html += `
             <div class="recent-item">
-                <div class="icon-circle" style="background: ${bgColor};">
+                <div class="icon-circle tap-row" style="background: ${bgColor};" onclick="openEditModal('${e.id}')">
                     ${icon}
                 </div>
-                <div style="flex: 1;">
+                <div style="flex: 1; min-width:0; cursor:pointer;" onclick="openEditModal('${e.id}')">
                     <div style="font-weight: 700; font-size: 14px; color: var(--text);">${e.desc}</div>
                     <div style="font-size: 11px; color: var(--muted);">${fmt(e.date)} • ${e.src.toUpperCase()}</div>
                 </div>
                 <div style="text-align: right; font-weight: 800; font-size: 14px; color: ${amountColor};">
-                    ${isPlus ? '+' : '-'} ₹${e.amount.toLocaleString('en-IN')}
+                    ${sign} ₹${e.amount.toLocaleString('en-IN')}
                 </div>
+                <div class="edit-pencil" onclick="openEditModal('${e.id}')">✏️</div>
             </div>
         `;
     });
     recentList.innerHTML = html;
 }
 
-// Original downloadBackup
+// ============== Edit / Delete modal (last 5 transactions) ==============
+function openEditModal(id){
+    const e = ledger.find(x=>x.id===id);
+    if(!e) return;
+    editingEntryId = id;
+
+    const isTransfer = e.type === 'transfer';
+    const isCredit = ['issued','taken','return','payback'].includes(e.type);
+
+    document.getElementById('eDate').value = e.date;
+    document.getElementById('eAmt').value = e.amount;
+
+    document.getElementById('eTransferBox').classList.toggle('hidden', !isTransfer);
+    document.getElementById('eAccBox').classList.toggle('hidden', isTransfer);
+    document.getElementById('eNameBox').classList.toggle('hidden', isTransfer);
+
+    if(isTransfer){
+        document.getElementById('eFrom').value = e.src;
+        document.getElementById('eTo').value = e.dest || guessDestFromDesc(e.desc) || 'wallet';
+    } else {
+        document.getElementById('eNameLabel').innerText = isCredit ? 'Person Name' : 'Particulars';
+        document.getElementById('eDesc').value = e.desc;
+        document.getElementById('eSrc').value = e.src;
+    }
+
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+function closeEditModal(){
+    editingEntryId = null;
+    document.getElementById('editModal').classList.add('hidden');
+}
+
+function saveEditedTransaction(){
+    const idx = ledger.findIndex(x=>x.id===editingEntryId);
+    if(idx===-1) return closeEditModal();
+    const old = ledger[idx];
+
+    const a = +document.getElementById('eAmt').value;
+    const dt = document.getElementById('eDate').value;
+    if(!a || a<=0 || !dt) return alert("Enter a valid amount and date");
+
+    // Reverse the old effect BEFORE computing the new one.
+    applyEffect(effectFor(old), -1);
+
+    let updated = {...old, date: dt, amount: a};
+
+    if(old.type === 'transfer'){
+        const f = document.getElementById('eFrom').value, t = document.getElementById('eTo').value;
+        if(f === t){ applyEffect(effectFor(old), 1); return alert("From and To accounts must be different"); }
+        updated.src = f; updated.dest = t;
+        updated.desc = `Transfer: ${cap(f)} to ${cap(t)}`;
+        updated.effect = [{acc:f, delta:-a},{acc:t, delta:a}];
+    } else {
+        updated.desc = document.getElementById('eDesc').value.trim() || old.desc;
+        updated.src = document.getElementById('eSrc').value;
+        let delta;
+        if(old.type === 'adjustment'){
+            const sign = (old.sign !== undefined) ? old.sign : (effectFor(old)[0].delta >= 0 ? 1 : -1);
+            delta = sign * a;
+            updated.sign = sign;
+        } else {
+            const isIn = ['income','taken','return'].includes(old.type);
+            delta = isIn ? a : -a;
+        }
+        updated.effect = [{acc: updated.src, delta}];
+    }
+
+    ledger[idx] = updated;
+    applyEffect(updated.effect, 1);
+    save();
+    closeEditModal();
+    alert("✅ Updated");
+}
+
+function deleteEditedTransaction(){
+    const idx = ledger.findIndex(x=>x.id===editingEntryId);
+    if(idx===-1) return closeEditModal();
+    if(!confirm("Delete this entry permanently? This cannot be undone.")) return;
+    applyEffect(effectFor(ledger[idx]), -1);
+    ledger.splice(idx,1);
+    save();
+    closeEditModal();
+}
+
+// ============== Backup / Restore ==============
 function downloadBackup() {
     const dataStr = JSON.stringify({ ledger, bal });
     const blob = new Blob([dataStr], { type: "application/json" });
@@ -486,7 +795,6 @@ function downloadBackup() {
     link.click();
 }
 
-// Original restoreBackup
 function restoreBackup() {
     const file = document.getElementById('importFile').files[0];
     if (!file) return alert("Select a file first");
@@ -495,22 +803,25 @@ function restoreBackup() {
         try {
             const imported = JSON.parse(e.target.result);
             ledger = imported.ledger; bal = imported.bal;
+            ledger.forEach(en=>{ if(!en.id) en.id = genId(); });
             save(); alert("Restore Complete!");
         } catch(err) { alert("Invalid File Format"); }
     };
     reader.readAsText(file);
 }
 
-// Original exportPDF
+// ============== PDF export ==============
 function exportPDF(){
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+    const accLabel = {bank:'Bank', wallet:'Cash', credit:'Credit Card'}[stmtAcc];
+    const monthVal = document.getElementById('stmtMonth').value;
 
     doc.setFontSize(18);
-    doc.text("Expense Statement", 14, 15);
+    doc.text(accLabel + " Statement", 14, 15);
 
     doc.setFontSize(10);
-    doc.text("Generated on: " + new Date().toLocaleDateString(), 14, 22);
+    doc.text("Period: " + monthVal + " | Generated on: " + new Date().toLocaleDateString(), 14, 22);
 
     doc.autoTable({
         html: '#mainTable',
@@ -520,10 +831,10 @@ function exportPDF(){
         headStyles:{fillColor:[6,95,70]}
     });
 
-    doc.save("Statement.pdf");
+    doc.save(accLabel + "_Statement_" + monthVal + ".pdf");
 }
 
-// Original installation logic
+// ============== Install prompt ==============
 let deferredPrompt;
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
@@ -539,22 +850,13 @@ function installApp() {
     });
   }
 }
+
 function setTodayDates(){
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('fDate').value = today;
     document.getElementById('cDate').value = today;
 }
-function renderCreditSummary(){
-    let given=0, taken=0;
 
-    ledger.forEach(e=>{
-        if(e.type==='issued') given+=e.amount;
-        if(e.type==='taken') taken+=e.amount;
-    });
-
-    document.getElementById('cGiven').innerText = given;
-    document.getElementById('cTaken').innerText = taken;
-}
 function resetForm(){
     const today = new Date().toISOString().split('T')[0];
 
@@ -566,6 +868,7 @@ function resetForm(){
     document.getElementById('cName').value = "";
     document.getElementById('cDate').value = today;
 }
+
 function showLoader(text="Processing..."){
     const l = document.getElementById('loader');
     l.style.visibility = "visible";
@@ -578,7 +881,9 @@ function hideLoader(){
     l.style.opacity = "0";
     setTimeout(()=>{ l.style.visibility="hidden"; },300);
 }
-// Initial Call to render data on page load
+
+// ============== Startup ==============
+document.getElementById('stmtMonth').value = new Date().toISOString().slice(0,7);
 render();
 </script>
 </body>
