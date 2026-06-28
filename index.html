@@ -285,9 +285,16 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
         <div class="card" id="credit-form">
             <h3 id="cTitle" style="margin-top:0">Issue Credit</h3>
             <div class="input-block"><label class="input-label">Date</label><input type="date" id="cDate" class="full-input" value=""></div>
-            <div class="input-block"><label class="input-label">Name</label><input type="text" id="cName" class="full-input" placeholder="Name"></div>
+            <div class="input-block"><label class="input-label" id="cNameLabel">Name</label><input type="text" id="cName" class="full-input" placeholder="Name (or shop name)"></div>
             <div class="input-block"><label class="input-label">Amount</label><div class="amt-row"><span id="cSym" class="amt-symbol">₹</span><input type="number" id="cAmt" class="amt-field" placeholder="0.00"></div></div>
-            <div class="input-block"><label class="input-label">Account</label><select id="cSrc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option></select></div>
+            <div class="input-block" id="cInKindBox">
+                <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text); cursor:pointer;">
+                    <input type="checkbox" id="cInKind" onchange="toggleInKind()" style="width:18px; height:18px;">
+                    📦 In Kind — goods/services, no cash moved
+                </label>
+                <div style="font-size:11px; color:var(--muted); margin-top:4px;">e.g. a shop tab, or lending/borrowing produce instead of money. Counts as a liability but won't touch any account balance.</div>
+            </div>
+            <div class="input-block" id="cAccBox"><label class="input-label">Account</label><select id="cSrc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option></select></div>
             <button class="btn-main" onclick="saveCredit()">Save Record</button>
         </div>
         <div id="credit-history" class="hidden">
@@ -410,6 +417,7 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
     <div id="eNameBox" class="input-block"><label class="input-label" id="eNameLabel">Particulars</label><input type="text" id="eDesc" class="full-input"></div>
     <div class="input-block"><label class="input-label">Amount</label><div class="amt-row"><span class="amt-symbol">₹</span><input type="number" id="eAmt" class="amt-field"></div></div>
     <div id="eAccBox" class="input-block"><label class="input-label">Account</label><select id="eSrc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div>
+    <div id="eInKindNote" class="hidden" style="font-size:12px; color:var(--muted); margin:-8px 0 14px;">📦 In Kind — no account involved, won't affect any balance.</div>
     <button class="btn-main" onclick="saveEditedTransaction()">Save Changes</button>
     <button class="btn-main" style="background:#fee2e2; color:var(--red);" onclick="deleteEditedTransaction()">🗑 Delete Entry</button>
     <button class="btn-main" style="background:#f1f5f9; color:var(--muted);" onclick="closeEditModal()">Cancel</button>
@@ -426,6 +434,17 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
     <div class="input-block"><label class="input-label">Account</label><select id="caSrc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option></select></div>
     <button class="btn-main" onclick="confirmCreditAction()">Save</button>
     <button class="btn-main" style="background:#f1f5f9; color:var(--muted);" onclick="closeCreditAction()">Cancel</button>
+  </div>
+</div>
+
+<!-- New: per-person full history, opened by tapping a name under People Who Owe You / People You Owe -->
+<div id="personDetailModal" class="sheet-overlay hidden">
+  <div class="card sheet-card">
+    <h3 id="pdName" style="margin-top:0">Name</h3>
+    <p id="pdSummary" style="color:var(--muted); font-size:13px; margin-top:-10px; margin-bottom:14px;"></p>
+    <div id="pdHistoryList" style="max-height:42vh; overflow-y:auto; margin-bottom:16px;"></div>
+    <div id="pdActions"></div>
+    <button class="btn-main" style="background:#f1f5f9; color:var(--muted);" onclick="closePersonDetail()">Close</button>
   </div>
 </div>
 
@@ -523,7 +542,21 @@ function moveSeg(i, t){
         const mMap = {issued:'Issue Credit', taken:'Take Loan', return:'Receive Back', payback:'Pay Back'};
         document.getElementById('cTitle').innerText = mMap[t];
         document.getElementById('cSym').style.color = (t==='taken'||t==='return') ? 'var(--green)' : 'var(--red)';
+
+        // Settling a debt (Return/Payback) always involves real money, even if the
+        // original debt was "in kind" - so the toggle only makes sense for new debt.
+        const canBeInKind = (t === 'issued' || t === 'taken');
+        document.getElementById('cInKindBox').classList.toggle('hidden', !canBeInKind);
+        if(!canBeInKind){
+            document.getElementById('cInKind').checked = false;
+            document.getElementById('cAccBox').classList.remove('hidden');
+        }
     }
+}
+
+function toggleInKind(){
+    const isInKind = document.getElementById('cInKind').checked;
+    document.getElementById('cAccBox').classList.toggle('hidden', isInKind);
 }
 
 function moveStmtSeg(i, acc){
@@ -534,11 +567,52 @@ function moveStmtSeg(i, acc){
 }
 
 // ============== Save: Credit (Issued/Taken/Return/Payback) ==============
+// Bank and Cash are never allowed to go negative - this is the actual money you
+// have, and a wrong entry shouldn't be able to quietly put you "below zero".
+// Credit Card is deliberately exempt: going over its limit is a different
+// concern (shown as Used > Limit) and isn't blocked here.
+function wouldGoNegative(acc, delta){
+    if(acc !== 'bank' && acc !== 'wallet') return null;
+    const projected = (bal[acc]||0) + delta;
+    if(projected < -0.005) return {acc, projected};
+    return null;
+}
+function blockIfNegative(acc, delta){
+    const neg = wouldGoNegative(acc, delta);
+    if(neg){
+        const accLabel = neg.acc === 'bank' ? 'Bank' : 'Cash';
+        alert(`⚠️ This would take your ${accLabel} balance to ₹${neg.projected.toFixed(2)} (negative). Transaction not saved — check the amount or account.`);
+        return true;
+    }
+    return false;
+}
+function firstNegativeEffect(effectArr){
+    for(const {acc, delta} of effectArr){
+        const neg = wouldGoNegative(acc, delta);
+        if(neg) return neg;
+    }
+    return null;
+}
+
 function saveCredit(){
-    let a = +document.getElementById('cAmt').value, n = document.getElementById('cName').value.trim(), s = document.getElementById('cSrc').value, dt = document.getElementById('cDate').value;
-    if(!a || a<=0 || !n) return alert("Fill all fields");
-    const delta = (cMode==='taken'||cMode==='return') ? a : -a;
-    const entry = {id:genId(), type:cMode, amount:a, desc:n, src:s, date:dt, effect:[{acc:s, delta}]};
+    let a = +document.getElementById('cAmt').value, n = document.getElementById('cName').value.trim(), dt = document.getElementById('cDate').value;
+    const isInKind = (cMode==='issued' || cMode==='taken') && document.getElementById('cInKind').checked;
+
+    if(!a || a<=0 || !n || !dt) return alert("Fill all fields");
+    if(!isInKind && !document.getElementById('cSrc').value) return alert("Select an account");
+
+    let entry;
+    if(isInKind){
+        // Goods/services, not cash: counts toward liabilities (via People lists and
+        // Net Worth, which read straight off type/amount) but never touches a balance.
+        entry = {id:genId(), type:cMode, amount:a, desc:n, src:null, date:dt, inKind:true, effect:[]};
+    } else {
+        const s = document.getElementById('cSrc').value;
+        const delta = (cMode==='taken'||cMode==='return') ? a : -a;
+        if(blockIfNegative(s, delta)) return;
+        entry = {id:genId(), type:cMode, amount:a, desc:n, src:s, date:dt, effect:[{acc:s, delta}]};
+    }
+
     ledger.unshift(entry);
     applyEffect(entry.effect, 1);
    	save();
@@ -555,10 +629,12 @@ function saveEntry(){
     if(fMode==='transfer'){
         let f = document.getElementById('fFrom').value, t = document.getElementById('fTo').value;
         if(f === t) return alert("From and To accounts must be different");
+        if(blockIfNegative(f, -a)) return;
         entry = {id:genId(), type:'transfer', amount:a, desc:`Transfer: ${cap(f)} to ${cap(t)}`, src:f, dest:t, date:dt, effect:[{acc:f,delta:-a},{acc:t,delta:a}]};
     } else {
         let d = document.getElementById('fDesc').value || cap(fMode), s = document.getElementById('fSrc').value;
         const delta = fMode==='income' ? a : -a;
+        if(blockIfNegative(s, delta)) return;
         entry = {id:genId(), type:fMode, amount:a, desc:d, src:s, date:dt, effect:[{acc:s, delta}]};
     }
     showLoader("Saving...");
@@ -739,11 +815,17 @@ function setupCardDots(){
 // reverse for newest-first display without breaking the balance math.
 function getStatementRows(acc, sel){
     const accEntries = [];
-    ledger.forEach(e=>{
+    // Walk oldest-added to newest-added (reverse of the ledger's unshift order).
+    // The app only stores a date, not a time-of-day, so for two entries on the
+    // SAME date, "which one happened later" is taken to be "whichever was added
+    // to the app later" - this is also what makes same-day ties land with the
+    // most-recently-added one on top once the list is reversed for display.
+    for(let i = ledger.length - 1; i >= 0; i--){
+        const e = ledger[i];
         effectFor(e).forEach(f=>{
             if(f.acc === acc) accEntries.push({date:e.date, desc:e.desc, type:e.type, delta:f.delta});
         });
-    });
+    }
 
     let opening = 0;
     accEntries.forEach(x=>{ if(x.date.slice(0,7) < sel) opening += x.delta; });
@@ -799,7 +881,8 @@ function renderStmt(){
 function renderCreditHistory(){
     let html = "";
     ledger.filter(e=>['issued','taken','return','payback'].includes(e.type)).forEach(e=>{
-        html += `<tr><td>${fmt(e.date)}</td><td>${e.desc}</td><td>${e.type.toUpperCase()}</td><td>₹${e.amount}</td></tr>`;
+        const badge = e.inKind ? ' <span style="font-size:9px; font-weight:800; background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:5px;">IN KIND</span>' : '';
+        html += `<tr><td>${fmt(e.date)}</td><td>${e.desc}</td><td>${e.type.toUpperCase()}${badge}</td><td>₹${e.amount}</td></tr>`;
     });
     document.getElementById('creditHistoryBody').innerHTML = html || "<tr><td colspan='4'>No history</td></tr>";
 }
@@ -822,8 +905,8 @@ function getPeopleSummary(){
 function personRow(name, amt, action){
     const safeName = name.replace(/'/g, "\\'");
     const color = action==='return' ? 'var(--green)' : 'var(--red)';
-    const hint = action==='return' ? 'Tap to record return' : 'Tap to pay back';
-    return `<div class="recent-item tap-row" onclick="openCreditAction('${safeName}','${action}',${amt})">
+    const hint = 'Tap for history';
+    return `<div class="recent-item tap-row" onclick="openPersonDetail('${safeName}')">
         <div class="icon-circle" style="background:#eef2ff;">👤</div>
         <div style="flex:1; min-width:0;">
             <div style="font-weight:700; font-size:14px; color:var(--text);">${name}</div>
@@ -866,12 +949,66 @@ function confirmCreditAction(){
     const s = document.getElementById('caSrc').value;
     if(!a || a<=0 || !dt) return alert("Enter a valid amount and date");
     const delta = caMode==='return' ? a : -a;
+    if(blockIfNegative(s, delta)) return;
     const entry = {id:genId(), type:caMode, amount:a, desc:caPersonName, src:s, date:dt, effect:[{acc:s, delta}]};
     ledger.unshift(entry);
     applyEffect(entry.effect, 1);
     save();
     closeCreditAction();
     alert("✅ Recorded");
+}
+
+// Full history for one person (tap their name), with Record Return/Payback
+// buttons inline so you can act right after reviewing the history.
+function openPersonDetail(name){
+    // ledger is already newest-added-first (unshift), so no extra sorting needed.
+    const entries = ledger.filter(e => ['issued','taken','return','payback'].includes(e.type) && e.desc === name);
+
+    let issued=0, returned=0, taken=0, paidback=0;
+    entries.forEach(e=>{
+        if(e.type==='issued') issued += e.amount;
+        if(e.type==='return') returned += e.amount;
+        if(e.type==='taken') taken += e.amount;
+        if(e.type==='payback') paidback += e.amount;
+    });
+    const receivable = +(issued - returned).toFixed(2);
+    const payable = +(taken - paidback).toFixed(2);
+
+    document.getElementById('pdName').innerText = name;
+    const summaryParts = [];
+    if(receivable > 0.005) summaryParts.push(`Owes you ₹${receivable.toLocaleString('en-IN')}`);
+    if(payable > 0.005) summaryParts.push(`You owe ₹${payable.toLocaleString('en-IN')}`);
+    document.getElementById('pdSummary').innerText = summaryParts.length ? summaryParts.join('  ·  ') : 'Fully settled';
+
+    const actionLabel = {issued:'You gave', taken:'You took', return:'They returned', payback:'You paid back'};
+    let html = "";
+    entries.forEach(e=>{
+        const isIn = (e.type==='taken' || e.type==='return');
+        const badge = e.inKind ? ' <span style="font-size:9px; font-weight:800; background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:5px;">IN KIND</span>' : '';
+        html += `<div class="stmt-row">
+            <div class="stmt-row-top">
+                <span class="stmt-date">${fmt(e.date)}</span>
+                <span class="stmt-type-badge">${e.type.toUpperCase()}</span>${badge}
+            </div>
+            <div class="stmt-row-mid">
+                <span class="stmt-desc">${actionLabel[e.type]}</span>
+                <span class="num stmt-amt ${isIn ? 'credit' : 'debit'}">${isIn ? '+' : '-'} ₹${e.amount.toLocaleString('en-IN')}</span>
+            </div>
+        </div>`;
+    });
+    document.getElementById('pdHistoryList').innerHTML = html || `<div style="text-align:center; padding:15px; color:var(--muted); font-size:12px;">No history yet.</div>`;
+
+    const safeName = name.replace(/'/g, "\\'");
+    let actionsHtml = "";
+    if(receivable > 0.005) actionsHtml += `<button class="btn-main" onclick="closePersonDetail(); openCreditAction('${safeName}','return',${receivable})">Record Return (₹${receivable.toLocaleString('en-IN')})</button>`;
+    if(payable > 0.005) actionsHtml += `<button class="btn-main" style="background:var(--red)" onclick="closePersonDetail(); openCreditAction('${safeName}','payback',${payable})">Record Payback (₹${payable.toLocaleString('en-IN')})</button>`;
+    document.getElementById('pdActions').innerHTML = actionsHtml;
+
+    document.getElementById('personDetailModal').classList.remove('hidden');
+}
+
+function closePersonDetail(){
+    document.getElementById('personDetailModal').classList.add('hidden');
 }
 
 function renderCreditSummary(){
@@ -899,11 +1036,12 @@ function renderRecent() {
     latestItems.forEach(e => {
         const isTransfer = e.type === 'transfer';
         const eff = effectFor(e);
-        const isPlus = isTransfer ? null : eff[0].delta > 0;
-        const icon = e.type === 'expense' ? '💸' : e.type === 'income' ? '💰' : isTransfer ? '⇄' : '🏦';
-        const bgColor = isTransfer ? '#ede9fe' : (isPlus ? '#dcfce7' : '#fee2e2');
-        const amountColor = isTransfer ? 'var(--secondary)' : (isPlus ? 'var(--green)' : 'var(--red)');
-        const sign = isTransfer ? '' : (isPlus ? '+' : '-');
+        const isPlus = (isTransfer || e.inKind) ? null : eff[0].delta > 0;
+        const icon = e.inKind ? '📦' : e.type === 'expense' ? '💸' : e.type === 'income' ? '💰' : isTransfer ? '⇄' : '🏦';
+        const bgColor = (isTransfer || e.inKind) ? '#ede9fe' : (isPlus ? '#dcfce7' : '#fee2e2');
+        const amountColor = (isTransfer || e.inKind) ? 'var(--secondary)' : (isPlus ? 'var(--green)' : 'var(--red)');
+        const sign = (isTransfer || e.inKind) ? '' : (isPlus ? '+' : '-');
+        const subline = e.inKind ? 'IN KIND • no account' : e.src.toUpperCase();
 
         html += `
             <div class="recent-item">
@@ -912,7 +1050,7 @@ function renderRecent() {
                 </div>
                 <div style="flex: 1; min-width:0; cursor:pointer;" onclick="openEditModal('${e.id}')">
                     <div style="font-weight: 700; font-size: 14px; color: var(--text);">${e.desc}</div>
-                    <div style="font-size: 11px; color: var(--muted);">${fmt(e.date)} • ${e.src.toUpperCase()}</div>
+                    <div style="font-size: 11px; color: var(--muted);">${fmt(e.date)} • ${subline}</div>
                 </div>
                 <div class="num" style="text-align: right; font-weight: 800; font-size: 14px; color: ${amountColor};">
                     ${sign} ₹${e.amount.toLocaleString('en-IN')}
@@ -937,8 +1075,9 @@ function openEditModal(id){
     document.getElementById('eAmt').value = e.amount;
 
     document.getElementById('eTransferBox').classList.toggle('hidden', !isTransfer);
-    document.getElementById('eAccBox').classList.toggle('hidden', isTransfer);
+    document.getElementById('eAccBox').classList.toggle('hidden', isTransfer || !!e.inKind);
     document.getElementById('eNameBox').classList.toggle('hidden', isTransfer);
+    document.getElementById('eInKindNote').classList.toggle('hidden', !e.inKind);
 
     if(isTransfer){
         document.getElementById('eFrom').value = e.src;
@@ -946,7 +1085,7 @@ function openEditModal(id){
     } else {
         document.getElementById('eNameLabel').innerText = isCredit ? 'Person Name' : 'Particulars';
         document.getElementById('eDesc').value = e.desc;
-        document.getElementById('eSrc').value = e.src;
+        if(!e.inKind) document.getElementById('eSrc').value = e.src;
     }
 
     document.getElementById('editModal').classList.remove('hidden');
@@ -979,17 +1118,34 @@ function saveEditedTransaction(){
         updated.effect = [{acc:f, delta:-a},{acc:t, delta:a}];
     } else {
         updated.desc = document.getElementById('eDesc').value.trim() || old.desc;
-        updated.src = document.getElementById('eSrc').value;
-        let delta;
-        if(old.type === 'adjustment'){
-            const sign = (old.sign !== undefined) ? old.sign : (effectFor(old)[0].delta >= 0 ? 1 : -1);
-            delta = sign * a;
-            updated.sign = sign;
+
+        if(old.inKind){
+            // Still no cash involved - keep it that way regardless of amount/date edits.
+            updated.src = null;
+            updated.effect = [];
         } else {
-            const isIn = ['income','taken','return'].includes(old.type);
-            delta = isIn ? a : -a;
+            updated.src = document.getElementById('eSrc').value;
+            let delta;
+            if(old.type === 'adjustment'){
+                const sign = (old.sign !== undefined) ? old.sign : (effectFor(old)[0].delta >= 0 ? 1 : -1);
+                delta = sign * a;
+                updated.sign = sign;
+            } else {
+                const isIn = ['income','taken','return'].includes(old.type);
+                delta = isIn ? a : -a;
+            }
+            updated.effect = [{acc: updated.src, delta}];
         }
-        updated.effect = [{acc: updated.src, delta}];
+    }
+
+    if(!old.inKind){
+        const neg = firstNegativeEffect(updated.effect);
+        if(neg){
+            applyEffect(effectFor(old), 1); // undo the reversal above - nothing actually changes
+            const accLabel = neg.acc === 'bank' ? 'Bank' : 'Cash';
+            alert(`⚠️ This would take your ${accLabel} balance to ₹${neg.projected.toFixed(2)} (negative). Edit not saved.`);
+            return;
+        }
     }
 
     ledger[idx] = updated;
@@ -1071,6 +1227,10 @@ function checkPdfLibs(){
     return true;
 }
 
+const PDF_BRAND = [6, 95, 70];      // matches --primary
+const PDF_MUTED = [110, 110, 110];
+const PDF_HILITE = [220, 252, 231];
+
 // All current balances in one place - shown at the top of every PDF so a
 // statement for any single account still gives full context.
 function buildBalancesSnapshotRows(){
@@ -1113,40 +1273,96 @@ function buildStatementBody(acc, sel){
 function highlightBalanceRows(data){
     if(data.row.raw[1] === 'Closing Balance' || data.row.raw[1] === 'Opening Balance'){
         data.cell.styles.fontStyle = 'bold';
-        data.cell.styles.fillColor = [240,253,244];
+        data.cell.styles.fillColor = PDF_HILITE;
+        data.cell.styles.textColor = PDF_BRAND;
     }
 }
 
-function addStatementSection(doc, title, sel, acc, startY){
-    doc.setFontSize(14);
-    doc.setTextColor(6,95,70);
-    doc.text(title, 14, startY);
-    doc.setFontSize(9);
-    doc.setTextColor(110);
-    doc.text("Period: " + sel, 14, startY + 6);
+// A branded letterhead band at the top of every page - this, plus the footer
+// below, is what actually makes the output read as a real statement rather
+// than a bare table dump. Returns the Y position where content can start.
+function addPdfLetterhead(doc, title, subtitle){
+    const pageWidth = doc.internal.pageSize.getWidth();
 
+    doc.setFillColor(...PDF_BRAND);
+    doc.rect(0, 0, pageWidth, 20, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text("EXPENSE TRACKER", 14, 13);
+    doc.setFontSize(8.5);
+    doc.setFont(undefined, 'normal');
+    doc.text("ACCOUNT STATEMENT", pageWidth - 14, 13, {align:'right'});
+
+    doc.setTextColor(30,30,30);
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text(title, 14, 32);
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...PDF_MUTED);
+    doc.text(subtitle, 14, 38);
+
+    doc.setDrawColor(225,225,225);
+    doc.line(14, 42, pageWidth - 14, 42);
+
+    return 50;
+}
+
+// Stamps a footer + page numbers on every page. Called once at the very end,
+// since the total page count is only known after all content is added.
+function addPdfFooters(doc){
+    const pageCount = doc.internal.getNumberOfPages();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    for(let i = 1; i <= pageCount; i++){
+        doc.setPage(i);
+        doc.setDrawColor(230,230,230);
+        doc.line(14, pageHeight - 16, pageWidth - 14, pageHeight - 16);
+        doc.setFontSize(8);
+        doc.setTextColor(...PDF_MUTED);
+        doc.setFont(undefined, 'normal');
+        doc.text("Generated by Expense Tracker", 14, pageHeight - 10);
+        doc.text(`Page ${i} of ${pageCount}`, pageWidth - 14, pageHeight - 10, {align:'right'});
+    }
+}
+
+function addStatementTable(doc, sel, acc, startY){
     doc.autoTable({
-        startY: startY + 11,
+        startY,
         head: [['Date','Particulars','Type','Debit','Credit','Balance']],
         body: buildStatementBody(acc, sel),
-        theme: 'striped',
-        styles:{fontSize:8, cellPadding:4},
-        headStyles:{fillColor:[6,95,70]},
-        columnStyles:{3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}},
+        theme: 'grid',
+        styles:{fontSize:8.5, cellPadding:4, lineColor:[230,230,230], lineWidth:0.3},
+        headStyles:{fillColor:PDF_BRAND, textColor:255, fontStyle:'bold'},
+        alternateRowStyles:{fillColor:[247,250,249]},
+        columnStyles:{
+            0:{cellWidth:22},
+            2:{cellWidth:22},
+            3:{cellWidth:26, halign:'right'},
+            4:{cellWidth:26, halign:'right'},
+            5:{cellWidth:30, halign:'right'}
+        },
         didParseCell: highlightBalanceRows
     });
     return doc.lastAutoTable.finalY;
 }
 
 function addBalancesSnapshot(doc, startY){
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...PDF_BRAND);
+    doc.text("Account Balances Snapshot", 14, startY);
+    doc.setFont(undefined, 'normal');
+
     doc.autoTable({
-        startY,
-        head: [['Account Balances Snapshot', '']],
+        startY: startY + 4,
         body: buildBalancesSnapshotRows(),
         theme: 'plain',
-        styles:{fontSize:9, cellPadding:3},
-        headStyles:{fontStyle:'bold', textColor:[6,95,70], fontSize:11},
-        columnStyles:{1:{halign:'right', fontStyle:'bold'}}
+        styles:{fontSize:9.5, cellPadding:3.5, textColor:[40,40,40]},
+        columnStyles:{0:{fontStyle:'bold', textColor:[90,90,90]}, 1:{halign:'right', fontStyle:'bold', textColor:PDF_BRAND}},
+        tableLineColor:[222,222,222],
+        tableLineWidth:0.4
     });
     return doc.lastAutoTable.finalY;
 }
@@ -1169,16 +1385,11 @@ function exportPDF(){
     const accLabel = {bank:'Bank', wallet:'Cash', credit:'Credit Card'}[stmtAcc];
     const sel = document.getElementById('stmtMonth').value;
 
-    doc.setFontSize(18);
-    doc.setTextColor(6,95,70);
-    doc.text(accLabel + " Statement", 14, 18);
-    doc.setFontSize(10);
-    doc.setTextColor(110);
-    doc.text("Generated on: " + new Date().toLocaleDateString('en-IN'), 14, 25);
+    const y0 = addPdfLetterhead(doc, accLabel + " Statement", "Period: " + sel + "   ·   Generated " + new Date().toLocaleDateString('en-IN'));
+    const y1 = addBalancesSnapshot(doc, y0);
+    addStatementTable(doc, sel, stmtAcc, y1 + 12);
 
-    const y = addBalancesSnapshot(doc, 32);
-    addStatementSection(doc, accLabel + " Statement", sel, stmtAcc, y + 12);
-
+    addPdfFooters(doc);
     sharePDF(doc, accLabel + "_Statement_" + sel + ".pdf");
 }
 
@@ -1188,20 +1399,16 @@ function exportCombinedPDF(){
     const doc = new jsPDF();
     const sel = document.getElementById('stmtMonth').value;
 
-    doc.setFontSize(18);
-    doc.setTextColor(6,95,70);
-    doc.text("Combined Statement — All Accounts", 14, 18);
-    doc.setFontSize(10);
-    doc.setTextColor(110);
-    doc.text("Period: " + sel + "  |  Generated on: " + new Date().toLocaleDateString('en-IN'), 14, 25);
-
-    addBalancesSnapshot(doc, 32);
+    const y0 = addPdfLetterhead(doc, "Combined Statement", "All Accounts   ·   Period: " + sel + "   ·   Generated " + new Date().toLocaleDateString('en-IN'));
+    addBalancesSnapshot(doc, y0);
 
     [['bank','Bank Statement'], ['wallet','Cash Statement'], ['credit','Credit Card Statement']].forEach(([acc, label])=>{
         doc.addPage();
-        addStatementSection(doc, label, sel, acc, 18);
+        const y = addPdfLetterhead(doc, label, "Period: " + sel);
+        addStatementTable(doc, sel, acc, y);
     });
 
+    addPdfFooters(doc);
     sharePDF(doc, "Combined_Statement_" + sel + ".pdf");
 }
 
@@ -1238,6 +1445,8 @@ function resetForm(){
     document.getElementById('cAmt').value = "";
     document.getElementById('cName').value = "";
     document.getElementById('cDate').value = today;
+    document.getElementById('cInKind').checked = false;
+    document.getElementById('cAccBox').classList.remove('hidden');
 }
 
 function showLoader(text="Processing..."){
