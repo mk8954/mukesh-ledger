@@ -12,7 +12,7 @@
 
 <link rel="apple-touch-icon" href="logo.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
@@ -47,6 +47,7 @@ body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 100
 .nav-item { text-align: center; font-size: 10px; color: #94a3b8; flex: 1; cursor: pointer; }
 .nav-item.active { color: var(--primary); font-weight: 700; }
 .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+.nav-home-elevated { width: 52px; height: 52px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; margin: -28px auto 4px; box-shadow: 0 6px 14px rgba(6,95,70,0.4); transition: 0.2s; }
 
 /* Original Cards & Forms Styling */
 .hidden { display: none !important; }
@@ -133,6 +134,63 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
 
 /* New: opening/closing balance rows in statements */
 .bal-row td { background: #f8fafc; font-weight: 800; }
+
+/* New: tabular/mono numerals for every money figure - gives a precise, "ledger" feel */
+.num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+
+/* New: OneView-style net worth hero */
+.networth-card {
+    margin: 15px;
+    padding: 24px 22px;
+    border-radius: 20px;
+    background: linear-gradient(155deg, #0b1f1c 0%, #06251f 55%, #065f46 130%);
+    color: #f1f5f9;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(6,95,70,0.28);
+}
+.nw-eyebrow { font-size: 11px; letter-spacing: 1.5px; color: #6ee7b7; font-weight: 700; }
+.nw-figure { font-size: 30px; font-weight: 700; margin: 6px 0 20px; }
+.nw-split { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.nw-split-label { font-size: 10px; letter-spacing: 1px; color: rgba(241,245,249,0.55); display: block; margin-bottom: 4px; }
+.nw-split-amt { font-size: 17px; font-weight: 700; color: #86efac; }
+.nw-bar { height: 6px; border-radius: 6px; background: rgba(255,255,255,0.14); overflow: hidden; }
+.nw-bar-fill { height: 100%; background: linear-gradient(90deg,#22c55e,#86efac); border-radius: 6px; transition: width 0.5s ease; }
+
+/* New: horizontally swipeable account cards (Bank / Cash / Credit) */
+.card-scroll { display: flex; gap: 14px; overflow-x: auto; padding: 4px 15px 6px; scroll-snap-type: x mandatory; scroll-padding: 0 15px; -webkit-overflow-scrolling: touch; }
+.card-scroll::-webkit-scrollbar { display: none; }
+.bank-card { flex: 0 0 88%; scroll-snap-align: center; border-radius: 20px; padding: 22px; min-height: 158px; color: white; position: relative; cursor: pointer; overflow: hidden; box-shadow: 0 10px 22px rgba(0,0,0,0.18); }
+.bank-card-bank { background: linear-gradient(135deg,#1e3a8a,#2563eb); }
+.bank-card-cash { background: linear-gradient(135deg,#92400e,#d97706); }
+.bank-card-credit { background: linear-gradient(135deg,#0b0f19,#3b0764); }
+.bc-chip { width: 34px; height: 24px; border-radius: 5px; background: linear-gradient(135deg,#fde68a,#d4af37); position: relative; }
+.bc-chip::before, .bc-chip::after { content:''; position:absolute; left:6px; right:6px; height:1px; background:rgba(0,0,0,0.35); }
+.bc-chip::before { top:8px; } .bc-chip::after { top:15px; }
+.bc-top { display: flex; align-items: center; justify-content: space-between; }
+.bc-label { font-size: 12px; letter-spacing: 1.5px; font-weight: 700; opacity: 0.85; }
+.bc-amt { font-size: 26px; font-weight: 700; margin: 22px 0 4px; position: relative; z-index: 2; }
+.bc-foot { font-size: 11px; opacity: 0.8; position: relative; z-index: 2; }
+.bc-watermark { position: absolute; right: -8px; bottom: -14px; font-size: 90px; opacity: 0.14; z-index: 1; line-height: 1; }
+
+.card-dots { display: flex; justify-content: center; gap: 6px; padding: 4px 0 8px; }
+.card-dots .dot { width: 6px; height: 6px; border-radius: 50%; background: #cbd5e1; transition: 0.25s; }
+.card-dots .dot.active { background: var(--primary); width: 16px; border-radius: 4px; }
+
+/* New: mobile-friendly statement list (replaces having to scroll the table sideways) */
+.stmt-bal-card { background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 14px; padding: 12px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.stmt-bal-card .label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.stmt-bal-card .amt { font-size: 16px; font-weight: 800; color: var(--primary); }
+.stmt-row { background: white; border: 1px solid #f1f5f9; border-radius: 14px; padding: 12px 16px; margin-bottom: 8px; }
+.stmt-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.stmt-date { font-size: 11px; color: var(--muted); font-weight: 600; }
+.stmt-type-badge { font-size: 9px; font-weight: 800; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 6px; background: #f1f5f9; color: var(--muted); }
+.stmt-row-mid { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.stmt-desc { font-size: 14px; font-weight: 700; color: var(--text); flex: 1; min-width: 0; word-break: break-word; }
+.stmt-amt { font-size: 15px; font-weight: 800; flex-shrink: 0; }
+.stmt-amt.debit { color: var(--red); }
+.stmt-amt.credit { color: var(--green); }
+.stmt-row-bal { font-size: 11px; color: var(--muted); margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -143,22 +201,54 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
 </div>
 
 <div id="scr-home">
-    <div class="balance-card">
-    	<img src="logo.png" class="card-logo">
-        <span style="font-size:13px; opacity:0.8">Total Balance</span>
-        <h2 id="hTotal" style="margin:8px 0 0; font-size:32px">₹ 0.00</h2>
+    <div class="networth-card">
+        <div class="nw-eyebrow">NET WORTH</div>
+        <div class="nw-figure num" id="nwTotal">₹ 0.00</div>
+        <div class="nw-split">
+            <div><span class="nw-split-label">BALANCE</span><div class="nw-split-amt num" id="nwAssets">₹ 0</div></div>
+            <div style="text-align:right"><span class="nw-split-label">LIABILITIES</span><div class="nw-split-amt num" id="nwLiab" style="color:#fca5a5">₹ 0</div></div>
+        </div>
+        <div class="nw-bar"><div class="nw-bar-fill" id="nwBarFill" style="width:50%"></div></div>
     </div>
-    <div class="sub-row">
-        <div><span>Bank</span><b id="hBank" style="display:block; color:var(--green)">₹ 0</b></div>
-        <div><span>Wallet</span><b id="hWallet" style="display:block; color:var(--secondary)">₹ 0</b></div>
-        <div><span>Credit Card</span><b id="hCredit" style="display:block; color:var(--green)">₹ 0</b></div>
+
+    <div class="card-scroll" id="cardScroll">
+        <div class="bank-card bank-card-bank" onclick="goToStatement('bank')">
+            <div class="bc-top"><span class="bc-label">BANK</span><div class="bc-chip"></div></div>
+            <div class="bc-amt num" id="hBank">₹ 0</div>
+            <div class="bc-foot">Tap for statement ›</div>
+            <div class="bc-watermark">🏦</div>
+        </div>
+        <div class="bank-card bank-card-cash" onclick="goToStatement('wallet')">
+            <div class="bc-top"><span class="bc-label">CASH</span><div class="bc-chip"></div></div>
+            <div class="bc-amt num" id="hWallet">₹ 0</div>
+            <div class="bc-foot">Tap for statement ›</div>
+            <div class="bc-watermark">💵</div>
+        </div>
+        <div class="bank-card bank-card-credit" onclick="goToStatement('credit')">
+            <div class="bc-top"><span class="bc-label">CREDIT CARD</span><div class="bc-chip"></div></div>
+            <div class="bc-amt num" id="hCreditUsed">₹ 0</div>
+            <div class="bc-foot" id="hCreditSub">Used · Tap for statement ›</div>
+            <div class="bc-watermark">💳</div>
+        </div>
     </div>
+    <div class="card-dots" id="cardDots"><span class="dot active"></span><span class="dot"></span><span class="dot"></span></div>
+
+    <div id="backupReminder" onclick="showTab('scr-backup')" style="margin:10px 15px; padding:10px 14px; border-radius:12px; font-size:12px; font-weight:600; cursor:pointer;"></div>
+
     <div style="padding:25px 15px 10px; font-weight:800; font-size:16px;">Quick Actions</div>
     <div style="display:flex; justify-content:space-around; padding:10px;">
-        <div onclick="openForm('expense')" style="text-align:center"><div style="background:var(--red); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:24px; margin:0 auto 5px">−</div><small>Expense</small></div>
-        <div onclick="openForm('income')" style="text-align:center"><div style="background:var(--green); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:24px; margin:0 auto 5px">+</div><small>Income</small></div>
-        <div onclick="showTab('scr-credit')" style="text-align:center"><div style="background:var(--secondary); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:20px; margin:0 auto 5px">₹</div><small>Credit</small></div>
-        <div onclick="openForm('transfer')" style="text-align:center"><div style="background:#8b5cf6; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:20px; margin:0 auto 5px">⇄</div><small>Transfer</small></div>
+        <div onclick="openForm('expense')" style="text-align:center"><div style="background:var(--red); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><line x1="12" y1="4" x2="12" y2="16"/><polyline points="6 11 12 17 18 11"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+        </div><small>Expense</small></div>
+        <div onclick="openForm('income')" style="text-align:center"><div style="background:var(--green); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><line x1="12" y1="20" x2="12" y2="8"/><polyline points="6 13 12 7 18 13"/><line x1="4" y1="4" x2="20" y2="4"/></svg>
+        </div><small>Income</small></div>
+        <div onclick="showTab('scr-credit')" style="text-align:center"><div style="background:var(--secondary); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 19c0-3 2.5-5 6-5s6 2 6 5"/><path d="M10 19c0-3 2.5-5 6-5s6 2 6 5"/></svg>
+        </div><small>Credit</small></div>
+        <div onclick="openForm('transfer')" style="text-align:center"><div style="background:#8b5cf6; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="17 2 21 6 17 10"/><line x1="3" y1="6" x2="21" y2="6"/><polyline points="7 22 3 18 7 14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+        </div><small>Transfer</small></div>
     </div>
 
     <div style="padding:25px 15px 5px; display: flex; justify-content: space-between; align-items: center;">
@@ -172,8 +262,8 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
 
 <div id="scr-credit" class="hidden">
 	<div class="sub-row">
-	<div><span>Outstanding (Given):</span><b id="cGiven" style="display:block; color:var(--green)">₹ 0</b></div>
-    <div><span>Outstanding (Taken):</span><b id="cTaken" style="display:block; color:var(--red)">₹ 0</b></div>
+	<div><span>Outstanding (Given):</span><b id="cGiven" class="num" style="display:block; color:var(--green)">₹ 0</b></div>
+    <div><span>Outstanding (Taken):</span><b id="cTaken" class="num" style="display:block; color:var(--red)">₹ 0</b></div>
 	</div>
 
     <div style="padding:20px 15px 5px; font-weight:800; font-size:15px;">👥 People Who Owe You</div>
@@ -242,15 +332,19 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
 
 <div id="scr-set" class="hidden">
     <div class="card" style="border:2px solid var(--secondary)">
-        <h3>Setup Balances</h3>
-        <div class="input-block"><label class="input-label">Bank</label><input type="number" id="iBank" class="full-input"></div>
-        <div class="input-block"><label class="input-label">Wallet</label><input type="number" id="iWallet" class="full-input"></div>
-        <div class="input-block"><label class="input-label">Credit</label><input type="number" id="iCredit" class="full-input"></div>
-        <button class="btn-main" style="background:var(--secondary)" onclick="initData()">Set All</button>
+        <h3>Update Balances</h3>
+        <p style="font-size:11px; color:var(--muted); margin-top:-10px;">Each field below is independent — leave any of them blank and it won't be touched.</p>
+        <div class="input-block"><label class="input-label">Bank</label><input type="number" id="iBank" class="full-input" placeholder="Leave blank to leave unchanged"></div>
+        <div class="input-block"><label class="input-label">Wallet (Cash)</label><input type="number" id="iWallet" class="full-input" placeholder="Leave blank to leave unchanged"></div>
+        <div id="creditLimitInfo" style="font-size:12px; color:var(--muted); margin:-8px 0 14px;"></div>
+        <div class="input-block"><label class="input-label">Credit Card Limit</label><input type="number" id="iCreditLimit" class="full-input" placeholder="Total limit on your card"></div>
+        <div class="input-block"><label class="input-label">Credit Available</label><input type="number" id="iCreditAvailable" class="full-input" placeholder="Current available credit"></div>
+        <button class="btn-main" style="background:var(--secondary)" onclick="initData()">Update</button>
     </div>
     <div class="card">
         <h3>Manual Adjustment</h3>
-        <div class="input-block"><label class="input-label">Select Account</label><select id="aAcc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div>
+        <p style="font-size:11px; color:var(--muted); margin-top:-10px;">For Credit, this adjusts Available (and therefore Used).</p>
+        <div class="input-block"><label class="input-label">Select Account</label><select id="aAcc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit (Available)</option></select></div>
         <div class="input-block"><label class="input-label">Adjustment (±)</label><input type="number" id="aAmt" class="full-input" placeholder="e.g. -10"></div>
         <div class="input-block"><label class="input-label">Reason</label><input type="text" id="aReason" class="full-input"></div>
         <button class="btn-main" style="background:#8b5cf6" onclick="doAdjust()">Apply</button>
@@ -266,31 +360,37 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
         <button class="seg-btn" onclick="moveStmtSeg(2,'credit')">💳 Credit Card</button>
     </div>
     <div style="padding:0 15px; display:flex; gap:10px;"><input type="month" id="stmtMonth" class="full-input"><button class="btn-main" onclick="renderStmt()" style="margin:0; flex:1">Generate</button></div>
-    <div style="padding:15px 15px 0"><button class="btn-main" style="background:var(--red)" onclick="exportPDF()">📄 Download PDF</button></div>
-    <div class="table-wrapper">
-        <table id="mainTable">
-            <thead>
-                <tr>
-                    <th style="padding:10px">Date</th>
-                    <th>Particulars</th>
-                    <th>Type</th>
-                    <th>Debit</th>
-                    <th>Credit</th>
-                    <th>Balance</th>
-                </tr>
-            </thead>
-            <tbody id="stmtBody">
-                </tbody>
-        </table>
+    <div style="padding:15px 15px 0; display:flex; gap:10px;">
+        <button class="btn-main" style="background:var(--red); margin:0;" onclick="exportPDF()">📄 This Account</button>
+        <button class="btn-main" style="background:var(--secondary); margin:0;" onclick="exportCombinedPDF()">📑 All Accounts</button>
     </div>
+
+    <div id="stmtCardList" style="padding:15px 15px 20px;"></div>
 </div>
 
 <div class="nav">
-    <div class="nav-item active" id="n-home" onclick="showTab('scr-home')"><span class="nav-icon">🏠</span>Home</div>
-    <div class="nav-item" id="n-stmt" onclick="showTab('scr-stmt')"><span class="nav-icon">📊</span>Stmt</div>
-    <div class="nav-item" id="n-credit" onclick="showTab('scr-credit')"><span class="nav-icon">💸</span>Credit</div>
-    <div class="nav-item" id="n-backup" onclick="showTab('scr-backup')"><span class="nav-icon">☁️</span>Backup</div>
-    <div class="nav-item" id="n-set" onclick="showTab('scr-set')"><span class="nav-icon">⚙️</span>Set</div>
+    <div class="nav-item" id="n-credit" onclick="showTab('scr-credit')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 19c0-3 2.5-5 6-5s6 2 6 5"/><path d="M10 19c0-3 2.5-5 6-5s6 2 6 5"/></svg>
+        <div>Credit</div>
+    </div>
+    <div class="nav-item" id="n-backup" onclick="showTab('scr-backup')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="7 9 12 4 17 9"/><line x1="12" y1="4" x2="12" y2="15"/><path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
+        <div>Backup</div>
+    </div>
+    <div class="nav-item active" id="n-home" onclick="showTab('scr-home')">
+        <div class="nav-home-elevated">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
+        </div>
+        <div>Home</div>
+    </div>
+    <div class="nav-item" id="n-set" onclick="showTab('scr-set')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2"/></svg>
+        <div>Set</div>
+    </div>
+    <div class="nav-item" id="n-stmt" onclick="showTab('scr-stmt')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+        <div>Stmt</div>
+    </div>
 </div>
 <div id="loader" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:9999;visibility:hidden;opacity:0;transition:0.3s;">
     <div class="spinner"></div>
@@ -391,6 +491,9 @@ function showTab(id){
 	if(id === 'scr-stmt'){
 	   renderStmt();
 	}
+	if(id === 'scr-set'){
+	   renderCreditLimitInfo();
+	}
     },150);
 
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -471,20 +574,74 @@ function saveEntry(){
 }
 
 function initData(){
-    // Route the initial setup through the ledger (as an adjustment entry) instead
-    // of silently overwriting `bal`. This keeps statement opening balances accurate
-    // for every future month, since they're reconstructed purely from ledger effects.
-    const targets = {bank:+document.getElementById('iBank').value, wallet:+document.getElementById('iWallet').value, credit:+document.getElementById('iCredit').value};
+    // Every field here is independent: a blank field is left completely untouched.
+    // (Previously, blank was silently treated as 0 - which meant leaving Bank empty
+    // while only updating Credit would wipe your Bank balance to zero. Fixed.)
     const today = new Date().toISOString().split('T')[0];
-    Object.keys(targets).forEach(acc=>{
-        const delta = targets[acc] - (bal[acc]||0);
+    let anyChange = false;
+
+    [['bank', document.getElementById('iBank').value], ['wallet', document.getElementById('iWallet').value]].forEach(([acc, val])=>{
+        if(val === '') return;
+        const target = +val;
+        const delta = target - (bal[acc]||0);
         if(Math.abs(delta) > 0.001){
-            const entry = {id:genId(), type:'adjustment', amount:Math.abs(delta), sign:(delta<0?-1:1), desc:'ADJ: Initial Setup', src:acc, date:today, effect:[{acc, delta}]};
+            const entry = {id:genId(), type:'adjustment', amount:Math.abs(delta), sign:(delta<0?-1:1), desc:'ADJ: Balance Update', src:acc, date:today, effect:[{acc, delta}]};
             ledger.unshift(entry);
             applyEffect(entry.effect, 1);
+            anyChange = true;
         }
     });
-    save(); alert("Balances Initialized!"); showTab('scr-home');
+
+    // Credit Card Limit: changing the limit shifts Available by the same amount,
+    // so whatever you've already spent (Used) doesn't change just because the
+    // bank raised or lowered your limit.
+    const limitVal = document.getElementById('iCreditLimit').value;
+    if(limitVal !== ''){
+        const newLimit = +limitVal;
+        const oldLimit = +localStorage.getItem('creditLimit') || 0;
+        const limitDelta = newLimit - oldLimit;
+        if(Math.abs(limitDelta) > 0.001){
+            const entry = {id:genId(), type:'adjustment', amount:Math.abs(limitDelta), sign:(limitDelta<0?-1:1), desc:'ADJ: Credit Limit Change', src:'credit', date:today, effect:[{acc:'credit', delta:limitDelta}]};
+            ledger.unshift(entry);
+            applyEffect(entry.effect, 1);
+            anyChange = true;
+        }
+        localStorage.setItem('creditLimit', newLimit);
+    }
+
+    // Credit Available: set directly (e.g. onboarding a card that already has some
+    // balance used). Computed last so it always lands on the exact figure you typed,
+    // even if you also changed the Limit in the same update.
+    const availVal = document.getElementById('iCreditAvailable').value;
+    if(availVal !== ''){
+        const newAvail = +availVal;
+        const delta = newAvail - (bal.credit||0);
+        if(Math.abs(delta) > 0.001){
+            const entry = {id:genId(), type:'adjustment', amount:Math.abs(delta), sign:(delta<0?-1:1), desc:'ADJ: Credit Available Update', src:'credit', date:today, effect:[{acc:'credit', delta}]};
+            ledger.unshift(entry);
+            applyEffect(entry.effect, 1);
+            anyChange = true;
+        }
+    }
+
+    if(!anyChange){ alert("No changes entered - fields left blank are not touched."); return; }
+
+    document.getElementById('iBank').value = '';
+    document.getElementById('iWallet').value = '';
+    document.getElementById('iCreditLimit').value = '';
+    document.getElementById('iCreditAvailable').value = '';
+
+    save(); alert("Balances Updated!"); showTab('scr-home');
+}
+
+
+function renderCreditLimitInfo(){
+    const el = document.getElementById('creditLimitInfo');
+    if(!el) return;
+    const limit = +localStorage.getItem('creditLimit') || 0;
+    const available = bal.credit || 0;
+    const used = Math.max(0, limit - available);
+    el.innerText = `Current — Limit: ₹${limit.toLocaleString('en-IN')} · Used: ₹${used.toLocaleString('en-IN')} · Available: ₹${available.toLocaleString('en-IN')}`;
 }
 
 function doAdjust(){
@@ -504,14 +661,20 @@ function save(){
 }
 
 function render(){
-    document.getElementById('hTotal').innerText = '₹ '+(bal.bank+bal.wallet).toLocaleString('en-IN',{minimumFractionDigits:2});
     document.getElementById('hBank').innerText = '₹ '+bal.bank.toLocaleString();
     document.getElementById('hWallet').innerText = '₹ '+bal.wallet.toLocaleString();
-    document.getElementById('hCredit').innerText = '₹ '+bal.credit.toLocaleString();
 
+    const creditLimit = +localStorage.getItem('creditLimit') || 0;
+    const available = bal.credit || 0;
+    const used = Math.max(0, creditLimit - available);
+    document.getElementById('hCreditUsed').innerText = '₹ ' + used.toLocaleString('en-IN');
+    document.getElementById('hCreditSub').innerText = `Limit ₹${creditLimit.toLocaleString('en-IN')} · Available ₹${available.toLocaleString('en-IN')}`;
+
+    renderNetWorth();
     renderCreditSummary();
     renderPeopleLists();
     renderRecent();
+    renderBackupReminder();
 }
 
 function fmt(iso){
@@ -519,15 +682,62 @@ function fmt(iso){
     return `${String(d.getDate()).padStart(2,'0')} ${m[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// ============== Statement (Fix #1 + #3: per-account, balance carried forward) ==============
-function renderStmt(){
-    const sel = document.getElementById('stmtMonth').value;
-    if(!sel) return;
-    const acc = stmtAcc;
+// ============== OneView-style Net Worth summary ==============
+// Balance = Bank + Wallet (cash you actually have right now).
+// Liabilities = money you still owe other people (active "Taken" credit, net of
+// paybacks) + whatever's currently used on your Credit Card (Limit - Available).
+function renderNetWorth(){
+    const people = getPeopleSummary();
+    let payable = 0;
+    Object.values(people).forEach(p=>{
+        const pay = p.taken - p.paidback; if(pay > 0) payable += pay;
+    });
+    const creditLimit = +localStorage.getItem('creditLimit') || 0;
+    const usedCredit = Math.max(0, creditLimit - (bal.credit || 0));
 
-    // Expand every ledger entry into the account-level effect(s) it caused.
-    // A transfer naturally produces one debit leg and one credit leg, so it
-    // shows up correctly on BOTH the source and destination account statements.
+    const balanceTotal = bal.bank + bal.wallet;
+    const liabilities = payable + usedCredit;
+    const net = balanceTotal - liabilities;
+
+    document.getElementById('nwTotal').innerText = '₹ ' + net.toLocaleString('en-IN', {minimumFractionDigits:2});
+    document.getElementById('nwAssets').innerText = '₹ ' + balanceTotal.toLocaleString('en-IN');
+    document.getElementById('nwLiab').innerText = '₹ ' + liabilities.toLocaleString('en-IN');
+
+    const total = balanceTotal + liabilities;
+    const pct = total > 0 ? (balanceTotal / total * 100) : 100;
+    document.getElementById('nwBarFill').style.width = Math.max(4, Math.min(100, pct)) + '%';
+}
+
+// Tapping a Bank/Cash/Credit card jumps straight to that account's statement.
+function goToStatement(acc){
+    stmtAcc = acc;
+    showTab('scr-stmt');
+    setTimeout(()=>{
+        const idx = {bank:0, wallet:1, credit:2}[acc];
+        document.getElementById('stmtSeg-slide').style.transform = `translateX(${idx*100}%)`;
+        document.querySelectorAll('#stmt-segmented .seg-btn').forEach((b,i)=>b.classList.toggle('active', i===idx));
+    }, 160);
+}
+
+// Keeps the dots under the card carousel in sync with manual swiping.
+function setupCardDots(){
+    const scroller = document.getElementById('cardScroll');
+    if(!scroller) return;
+    const dots = document.querySelectorAll('#cardDots .dot');
+    scroller.addEventListener('scroll', ()=>{
+        const cardW = scroller.clientWidth * 0.88 + 14;
+        const idx = Math.min(2, Math.max(0, Math.round(scroller.scrollLeft / cardW)));
+        dots.forEach((d,i)=>d.classList.toggle('active', i===idx));
+    }, {passive:true});
+}
+
+// ============== Statement (Fix #1 + #3: per-account, balance carried forward) ==============
+// Pure data helper - the single source of truth for "what happened in this
+// account during this month", used by both the on-screen statement and the
+// PDF exporter. Returns rows in chronological (oldest-first) order, each
+// carrying the running balance immediately after it - so callers can safely
+// reverse for newest-first display without breaking the balance math.
+function getStatementRows(acc, sel){
     const accEntries = [];
     ledger.forEach(e=>{
         effectFor(e).forEach(f=>{
@@ -535,7 +745,6 @@ function renderStmt(){
         });
     });
 
-    // Opening balance = net effect of everything dated before the selected month.
     let opening = 0;
     accEntries.forEach(x=>{ if(x.date.slice(0,7) < sel) opening += x.delta; });
 
@@ -544,30 +753,46 @@ function renderStmt(){
         .sort((a,b) => a.date.localeCompare(b.date));
 
     let b = opening;
-    let html = `<tr class="bal-row"><td colspan="5" style="padding:10px">Opening Balance</td><td>₹${opening.toFixed(2)}</td></tr>`;
-
-    monthEntries.forEach(x=>{
+    const rows = monthEntries.map(x=>{
         b += x.delta;
-        const isIn = x.delta >= 0;
-        html += `<tr>
-            <td style="padding:10px">${fmt(x.date)}</td>
-            <td>${x.desc}</td>
-            <td>${x.type.toUpperCase()}</td>
-            <td style="color:var(--red)">${isIn ? '-' : '₹' + Math.abs(x.delta).toFixed(2)}</td>
-            <td style="color:var(--green)">${isIn ? '₹' + Math.abs(x.delta).toFixed(2) : '-'}</td>
-            <td>₹${b.toFixed(2)}</td>
-        </tr>`;
+        return {date:x.date, desc:x.desc, type:x.type, delta:x.delta, balanceAfter:b};
     });
 
-    html += `<tr class="bal-row"><td colspan="5" style="padding:10px">Closing Balance</td><td>₹${b.toFixed(2)}</td></tr>`;
+    return {opening, closing:b, rows};
+}
 
-    if(monthEntries.length === 0){
-        html = `<tr class="bal-row"><td colspan="5" style="padding:10px">Opening Balance</td><td>₹${opening.toFixed(2)}</td></tr>
-                <tr><td colspan="6" style="text-align:center; padding:20px;">No transactions this month.</td></tr>
-                <tr class="bal-row"><td colspan="5" style="padding:10px">Closing Balance</td><td>₹${opening.toFixed(2)}</td></tr>`;
+function renderStmt(){
+    const sel = document.getElementById('stmtMonth').value;
+    if(!sel) return;
+    const {opening, closing, rows} = getStatementRows(stmtAcc, sel);
+
+    // Newest first: Closing Balance at top (your current standing), then
+    // transactions newest-to-oldest, ending with Opening Balance at the bottom.
+    let cardHtml = `<div class="stmt-bal-card"><span class="label">Closing Balance</span><span class="amt num">₹${closing.toFixed(2)}</span></div>`;
+
+    if(rows.length === 0){
+        cardHtml += `<div style="text-align:center; padding:25px; color:var(--muted); font-size:13px;">No transactions this month yet — they'll show up here once added.</div>`;
+    } else {
+        [...rows].reverse().forEach(x=>{
+            const isIn = x.delta >= 0;
+            const abs = Math.abs(x.delta).toFixed(2);
+            cardHtml += `<div class="stmt-row">
+                <div class="stmt-row-top">
+                    <span class="stmt-date">${fmt(x.date)}</span>
+                    <span class="stmt-type-badge">${x.type.toUpperCase()}</span>
+                </div>
+                <div class="stmt-row-mid">
+                    <span class="stmt-desc">${x.desc}</span>
+                    <span class="num stmt-amt ${isIn ? 'credit' : 'debit'}">${isIn ? '+' : '-'} ₹${abs}</span>
+                </div>
+                <div class="stmt-row-bal">Balance: <span class="num">₹${x.balanceAfter.toFixed(2)}</span></div>
+            </div>`;
+        });
     }
 
-    document.getElementById('stmtBody').innerHTML = html;
+    cardHtml += `<div class="stmt-bal-card"><span class="label">Opening Balance</span><span class="amt num">₹${opening.toFixed(2)}</span></div>`;
+
+    document.getElementById('stmtCardList').innerHTML = cardHtml;
 }
 
 // ============== Credit History (raw list, unchanged behaviour) ==============
@@ -604,7 +829,7 @@ function personRow(name, amt, action){
             <div style="font-weight:700; font-size:14px; color:var(--text);">${name}</div>
             <div style="font-size:11px; color:var(--muted);">${hint}</div>
         </div>
-        <div style="text-align:right; font-weight:800; font-size:14px; color:${color};">₹${amt.toLocaleString('en-IN')}</div>
+        <div class="num" style="text-align:right; font-weight:800; font-size:14px; color:${color};">₹${amt.toLocaleString('en-IN')}</div>
         <div class="tap-chevron">›</div>
     </div>`;
 }
@@ -689,7 +914,7 @@ function renderRecent() {
                     <div style="font-weight: 700; font-size: 14px; color: var(--text);">${e.desc}</div>
                     <div style="font-size: 11px; color: var(--muted);">${fmt(e.date)} • ${e.src.toUpperCase()}</div>
                 </div>
-                <div style="text-align: right; font-weight: 800; font-size: 14px; color: ${amountColor};">
+                <div class="num" style="text-align: right; font-weight: 800; font-size: 14px; color: ${amountColor};">
                     ${sign} ₹${e.amount.toLocaleString('en-IN')}
                 </div>
                 <div class="edit-pencil" onclick="openEditModal('${e.id}')">✏️</div>
@@ -793,6 +1018,31 @@ function downloadBackup() {
     link.href = url;
     link.download = "ledger_backup.json";
     link.click();
+    localStorage.setItem('lastBackupDate', new Date().toISOString());
+    renderBackupReminder();
+}
+
+// Nudges towards backing up - since this is all local storage, clearing browser
+// data without a recent backup means losing everything.
+function renderBackupReminder(){
+    const el = document.getElementById('backupReminder');
+    if(!el) return;
+    const last = localStorage.getItem('lastBackupDate');
+
+    if(!last){
+        el.innerHTML = "⚠️ You haven't backed up yet — <b>tap to back up now ›</b>";
+        el.style.background = '#fef3c7'; el.style.color = '#92400e';
+        return;
+    }
+
+    const days = Math.floor((Date.now() - new Date(last).getTime()) / (1000*60*60*24));
+    if(days <= 7){
+        el.innerHTML = `✅ Last backed up ${days === 0 ? 'today' : days + ' day' + (days > 1 ? 's' : '') + ' ago'}`;
+        el.style.background = '#dcfce7'; el.style.color = '#166534';
+    } else {
+        el.innerHTML = `⚠️ Last backup was ${days} days ago — <b>tap to back up now ›</b>`;
+        el.style.background = '#fef3c7'; el.style.color = '#92400e';
+    }
 }
 
 function restoreBackup() {
@@ -811,27 +1061,148 @@ function restoreBackup() {
 }
 
 // ============== PDF export ==============
+function fmtRs(n){ return 'Rs. ' + (n||0).toLocaleString('en-IN', {minimumFractionDigits:2}); }
+
+function checkPdfLibs(){
+    if(!window.jspdf || typeof window.jspdf.jsPDF !== 'function'){
+        alert("⚠️ Couldn't load the PDF tool. This needs an internet connection the first time it's used — connect once, try again, and it'll keep working offline after that.");
+        return false;
+    }
+    return true;
+}
+
+// All current balances in one place - shown at the top of every PDF so a
+// statement for any single account still gives full context.
+function buildBalancesSnapshotRows(){
+    const creditLimit = +localStorage.getItem('creditLimit') || 0;
+    const available = bal.credit || 0;
+    const used = Math.max(0, creditLimit - available);
+    const people = getPeopleSummary();
+    let payable = 0;
+    Object.values(people).forEach(p=>{ const pay = p.taken - p.paidback; if(pay > 0) payable += pay; });
+    const balanceTotal = bal.bank + bal.wallet;
+    const liabilities = payable + used;
+
+    return [
+        ['Bank Balance', fmtRs(bal.bank)],
+        ['Cash Balance', fmtRs(bal.wallet)],
+        ['Credit Card Limit', fmtRs(creditLimit)],
+        ['Credit Card Used', fmtRs(used)],
+        ['Credit Card Available', fmtRs(available)],
+        ['Total Balance (Cash + Bank)', fmtRs(balanceTotal)],
+        ['Total Liabilities', fmtRs(liabilities)],
+        ['Net Worth', fmtRs(balanceTotal - liabilities)]
+    ];
+}
+
+// Newest-first body rows for one account's statement table, with Closing
+// Balance pinned at the top and Opening Balance pinned at the bottom.
+function buildStatementBody(acc, sel){
+    const { opening, closing, rows } = getStatementRows(acc, sel);
+    const txnRows = [...rows].reverse().map(x=>{
+        const isIn = x.delta >= 0, abs = Math.abs(x.delta);
+        return [fmt(x.date), x.desc, x.type.toUpperCase(), isIn ? '-' : fmtRs(abs), isIn ? fmtRs(abs) : '-', fmtRs(x.balanceAfter)];
+    });
+    return [
+        ['', 'Closing Balance', '', '', '', fmtRs(closing)],
+        ...(txnRows.length ? txnRows : [['','No transactions this month','','','','']]),
+        ['', 'Opening Balance', '', '', '', fmtRs(opening)]
+    ];
+}
+
+function highlightBalanceRows(data){
+    if(data.row.raw[1] === 'Closing Balance' || data.row.raw[1] === 'Opening Balance'){
+        data.cell.styles.fontStyle = 'bold';
+        data.cell.styles.fillColor = [240,253,244];
+    }
+}
+
+function addStatementSection(doc, title, sel, acc, startY){
+    doc.setFontSize(14);
+    doc.setTextColor(6,95,70);
+    doc.text(title, 14, startY);
+    doc.setFontSize(9);
+    doc.setTextColor(110);
+    doc.text("Period: " + sel, 14, startY + 6);
+
+    doc.autoTable({
+        startY: startY + 11,
+        head: [['Date','Particulars','Type','Debit','Credit','Balance']],
+        body: buildStatementBody(acc, sel),
+        theme: 'striped',
+        styles:{fontSize:8, cellPadding:4},
+        headStyles:{fillColor:[6,95,70]},
+        columnStyles:{3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}},
+        didParseCell: highlightBalanceRows
+    });
+    return doc.lastAutoTable.finalY;
+}
+
+function addBalancesSnapshot(doc, startY){
+    doc.autoTable({
+        startY,
+        head: [['Account Balances Snapshot', '']],
+        body: buildBalancesSnapshotRows(),
+        theme: 'plain',
+        styles:{fontSize:9, cellPadding:3},
+        headStyles:{fontStyle:'bold', textColor:[6,95,70], fontSize:11},
+        columnStyles:{1:{halign:'right', fontStyle:'bold'}}
+    });
+    return doc.lastAutoTable.finalY;
+}
+
+// On many installed Android PWAs, a synthetic download click (doc.save()) fails
+// silently. Try the Share Sheet first - it reliably offers "Save to Files" there.
+function sharePDF(doc, fileName){
+    const blob = doc.output('blob');
+    if(navigator.canShare && navigator.canShare({files:[new File([blob], fileName, {type:'application/pdf'})]})){
+        navigator.share({ files:[new File([blob], fileName, {type:'application/pdf'})], title: fileName }).catch(()=>{ doc.save(fileName); });
+    } else {
+        doc.save(fileName);
+    }
+}
+
 function exportPDF(){
+    if(!checkPdfLibs()) return;
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const accLabel = {bank:'Bank', wallet:'Cash', credit:'Credit Card'}[stmtAcc];
-    const monthVal = document.getElementById('stmtMonth').value;
+    const sel = document.getElementById('stmtMonth').value;
 
     doc.setFontSize(18);
-    doc.text(accLabel + " Statement", 14, 15);
-
+    doc.setTextColor(6,95,70);
+    doc.text(accLabel + " Statement", 14, 18);
     doc.setFontSize(10);
-    doc.text("Period: " + monthVal + " | Generated on: " + new Date().toLocaleDateString(), 14, 22);
+    doc.setTextColor(110);
+    doc.text("Generated on: " + new Date().toLocaleDateString('en-IN'), 14, 25);
 
-    doc.autoTable({
-        html: '#mainTable',
-        startY: 28,
-        theme: 'grid',
-        styles:{fontSize:8},
-        headStyles:{fillColor:[6,95,70]}
+    const y = addBalancesSnapshot(doc, 32);
+    addStatementSection(doc, accLabel + " Statement", sel, stmtAcc, y + 12);
+
+    sharePDF(doc, accLabel + "_Statement_" + sel + ".pdf");
+}
+
+function exportCombinedPDF(){
+    if(!checkPdfLibs()) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const sel = document.getElementById('stmtMonth').value;
+
+    doc.setFontSize(18);
+    doc.setTextColor(6,95,70);
+    doc.text("Combined Statement — All Accounts", 14, 18);
+    doc.setFontSize(10);
+    doc.setTextColor(110);
+    doc.text("Period: " + sel + "  |  Generated on: " + new Date().toLocaleDateString('en-IN'), 14, 25);
+
+    addBalancesSnapshot(doc, 32);
+
+    [['bank','Bank Statement'], ['wallet','Cash Statement'], ['credit','Credit Card Statement']].forEach(([acc, label])=>{
+        doc.addPage();
+        addStatementSection(doc, label, sel, acc, 18);
     });
 
-    doc.save(accLabel + "_Statement_" + monthVal + ".pdf");
+    sharePDF(doc, "Combined_Statement_" + sel + ".pdf");
 }
 
 // ============== Install prompt ==============
@@ -885,6 +1256,14 @@ function hideLoader(){
 // ============== Startup ==============
 document.getElementById('stmtMonth').value = new Date().toISOString().slice(0,7);
 render();
+setupCardDots();
+
+// The service worker caches the app shell + the PDF library (jsPDF/autotable) the
+// first time they load successfully, so PDF export keeps working even if you're
+// offline later. Previously this was never registered, so it did nothing at all.
+if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
 </script>
 </body>
 </html>
