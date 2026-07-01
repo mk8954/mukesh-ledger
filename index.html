@@ -202,7 +202,10 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
 
 <div id="scr-home">
     <div class="networth-card">
-        <div class="nw-eyebrow">NET WORTH</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="nw-eyebrow">NET WORTH</div>
+            <button id="eyeBtn" onclick="toggleBalanceVisibility()" style="background:rgba(255,255,255,0.15); border:none; border-radius:20px; padding:4px 10px; cursor:pointer; font-size:15px;" title="Show/hide balances">👁</button>
+        </div>
         <div class="nw-figure num" id="nwTotal">₹ 0.00</div>
         <div class="nw-split">
             <div><span class="nw-split-label">BALANCE</span><div class="nw-split-amt num" id="nwAssets">₹ 0</div></div>
@@ -266,11 +269,17 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
     <div><span>Outstanding (Taken):</span><b id="cTaken" class="num" style="display:block; color:var(--red)">₹ 0</b></div>
 	</div>
 
-    <div style="padding:20px 15px 5px; font-weight:800; font-size:15px;">👥 People Who Owe You</div>
-    <div id="owedToMeList" style="padding:0 15px;"></div>
+    <div onclick="toggleCreditList('owedToMe')" style="padding:15px 15px 5px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+        <span style="font-weight:800; font-size:15px;">👥 People Who Owe You</span>
+        <span id="owedToMeToggle" style="font-size:12px; font-weight:700; color:var(--primary); background:#f0fdf4; padding:4px 12px; border-radius:20px;">Show</span>
+    </div>
+    <div id="owedToMeList" class="hidden" style="padding:0 15px;"></div>
 
-    <div style="padding:20px 15px 5px; font-weight:800; font-size:15px;">🧾 People You Owe</div>
-    <div id="owedByMeList" style="padding:0 15px;"></div>
+    <div onclick="toggleCreditList('owedByMe')" style="padding:15px 15px 5px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+        <span style="font-weight:800; font-size:15px;">🧾 People You Owe</span>
+        <span id="owedByMeToggle" style="font-size:12px; font-weight:700; color:var(--red); background:#fef2f2; padding:4px 12px; border-radius:20px;">Show</span>
+    </div>
+    <div id="owedByMeList" class="hidden" style="padding:0 15px;"></div>
 
     <div style="padding:20px 15px 5px; font-weight:800; font-size:14px; color:var(--muted);">Add New Record</div>
     <div class="segmented" id="credit-segmented">
@@ -287,6 +296,7 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
             <div class="input-block"><label class="input-label">Date</label><input type="date" id="cDate" class="full-input" value=""></div>
             <div class="input-block"><label class="input-label" id="cNameLabel">Name</label><input type="text" id="cName" class="full-input" placeholder="Name (or shop name)"></div>
             <div class="input-block"><label class="input-label">Amount</label><div class="amt-row"><span id="cSym" class="amt-symbol">₹</span><input type="number" id="cAmt" class="amt-field" placeholder="0.00"></div></div>
+            <div class="input-block"><label class="input-label">Remarks <span style="font-weight:400; color:var(--muted)">(optional)</span></label><input type="text" id="cRemarks" class="full-input" placeholder="e.g. Wedding loan, Grocery tab, Emergency help…"></div>
             <div class="input-block" id="cInKindBox">
                 <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text); cursor:pointer;">
                     <input type="checkbox" id="cInKind" onchange="toggleInKind()" style="width:18px; height:18px;">
@@ -597,20 +607,19 @@ function firstNegativeEffect(effectArr){
 function saveCredit(){
     let a = +document.getElementById('cAmt').value, n = document.getElementById('cName').value.trim(), dt = document.getElementById('cDate').value;
     const isInKind = (cMode==='issued' || cMode==='taken') && document.getElementById('cInKind').checked;
+    const remarks = document.getElementById('cRemarks').value.trim();
 
     if(!a || a<=0 || !n || !dt) return alert("Fill all fields");
     if(!isInKind && !document.getElementById('cSrc').value) return alert("Select an account");
 
     let entry;
     if(isInKind){
-        // Goods/services, not cash: counts toward liabilities (via People lists and
-        // Net Worth, which read straight off type/amount) but never touches a balance.
-        entry = {id:genId(), type:cMode, amount:a, desc:n, src:null, date:dt, inKind:true, effect:[]};
+        entry = {id:genId(), type:cMode, amount:a, desc:n, remarks, src:null, date:dt, inKind:true, effect:[]};
     } else {
         const s = document.getElementById('cSrc').value;
         const delta = (cMode==='taken'||cMode==='return') ? a : -a;
         if(blockIfNegative(s, delta)) return;
-        entry = {id:genId(), type:cMode, amount:a, desc:n, src:s, date:dt, effect:[{acc:s, delta}]};
+        entry = {id:genId(), type:cMode, amount:a, desc:n, remarks, src:s, date:dt, effect:[{acc:s, delta}]};
     }
 
     ledger.unshift(entry);
@@ -737,14 +746,16 @@ function save(){
 }
 
 function render(){
-    document.getElementById('hBank').innerText = '₹ '+bal.bank.toLocaleString();
-    document.getElementById('hWallet').innerText = '₹ '+bal.wallet.toLocaleString();
+    document.getElementById('hBank').innerText = maskIfHidden('₹ '+bal.bank.toLocaleString());
+    document.getElementById('hWallet').innerText = maskIfHidden('₹ '+bal.wallet.toLocaleString());
 
     const creditLimit = +localStorage.getItem('creditLimit') || 0;
     const available = bal.credit || 0;
     const used = Math.max(0, creditLimit - available);
-    document.getElementById('hCreditUsed').innerText = '₹ ' + used.toLocaleString('en-IN');
-    document.getElementById('hCreditSub').innerText = `Limit ₹${creditLimit.toLocaleString('en-IN')} · Available ₹${available.toLocaleString('en-IN')}`;
+    document.getElementById('hCreditUsed').innerText = maskIfHidden('₹ ' + used.toLocaleString('en-IN'));
+    document.getElementById('hCreditSub').innerText = balancesHidden
+        ? 'Limit •••• · Available ••••'
+        : `Limit ₹${creditLimit.toLocaleString('en-IN')} · Available ₹${available.toLocaleString('en-IN')}`;
 
     renderNetWorth();
     renderCreditSummary();
@@ -762,6 +773,17 @@ function fmt(iso){
 // Balance = Bank + Wallet (cash you actually have right now).
 // Liabilities = money you still owe other people (active "Taken" credit, net of
 // paybacks) + whatever's currently used on your Credit Card (Limit - Available).
+let balancesHidden = false;
+const MASK = '₹ ••••';
+
+function toggleBalanceVisibility(){
+    balancesHidden = !balancesHidden;
+    document.getElementById('eyeBtn').innerText = balancesHidden ? '🙈' : '👁';
+    render(); // re-render to apply/remove masking everywhere
+}
+
+function maskIfHidden(val){ return balancesHidden ? MASK : val; }
+
 function renderNetWorth(){
     const people = getPeopleSummary();
     let payable = 0;
@@ -775,13 +797,13 @@ function renderNetWorth(){
     const liabilities = payable + usedCredit;
     const net = balanceTotal - liabilities;
 
-    document.getElementById('nwTotal').innerText = '₹ ' + net.toLocaleString('en-IN', {minimumFractionDigits:2});
-    document.getElementById('nwAssets').innerText = '₹ ' + balanceTotal.toLocaleString('en-IN');
-    document.getElementById('nwLiab').innerText = '₹ ' + liabilities.toLocaleString('en-IN');
+    document.getElementById('nwTotal').innerText = maskIfHidden('₹ ' + net.toLocaleString('en-IN', {minimumFractionDigits:2}));
+    document.getElementById('nwAssets').innerText = maskIfHidden('₹ ' + balanceTotal.toLocaleString('en-IN'));
+    document.getElementById('nwLiab').innerText = maskIfHidden('₹ ' + liabilities.toLocaleString('en-IN'));
 
     const total = balanceTotal + liabilities;
     const pct = total > 0 ? (balanceTotal / total * 100) : 100;
-    document.getElementById('nwBarFill').style.width = Math.max(4, Math.min(100, pct)) + '%';
+    document.getElementById('nwBarFill').style.width = balancesHidden ? '50%' : Math.max(4, Math.min(100, pct)) + '%';
 }
 
 // Tapping a Bank/Cash/Credit card jumps straight to that account's statement.
@@ -882,7 +904,8 @@ function renderCreditHistory(){
     let html = "";
     ledger.filter(e=>['issued','taken','return','payback'].includes(e.type)).forEach(e=>{
         const badge = e.inKind ? ' <span style="font-size:9px; font-weight:800; background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:5px;">IN KIND</span>' : '';
-        html += `<tr><td>${fmt(e.date)}</td><td>${e.desc}</td><td>${e.type.toUpperCase()}${badge}</td><td>₹${e.amount}</td></tr>`;
+        const remarksNote = e.remarks ? ` <span style="font-size:10px; color:var(--muted); font-style:italic;">📝 ${e.remarks}</span>` : '';
+        html += `<tr><td>${fmt(e.date)}</td><td>${e.desc}${remarksNote}</td><td>${e.type.toUpperCase()}${badge}</td><td>₹${e.amount}</td></tr>`;
     });
     document.getElementById('creditHistoryBody').innerHTML = html || "<tr><td colspan='4'>No history</td></tr>";
 }
@@ -917,6 +940,24 @@ function personRow(name, amt, action){
     </div>`;
 }
 
+// Track collapsed/expanded state for the two people lists
+const creditListState = {owedToMe: false, owedByMe: false};
+
+function toggleCreditList(key){
+    creditListState[key] = !creditListState[key];
+    const listId = key === 'owedToMe' ? 'owedToMeList' : 'owedByMeList';
+    const toggleId = key === 'owedToMe' ? 'owedToMeToggle' : 'owedByMeToggle';
+    const el = document.getElementById(listId);
+    const btn = document.getElementById(toggleId);
+    if(creditListState[key]){
+        el.classList.remove('hidden');
+        btn.innerText = 'Hide';
+    } else {
+        el.classList.add('hidden');
+        btn.innerText = 'Show';
+    }
+}
+
 function renderPeopleLists(){
     const elGive = document.getElementById('owedToMeList'), elTake = document.getElementById('owedByMeList');
     if(!elGive || !elTake) return;
@@ -931,6 +972,9 @@ function renderPeopleLists(){
     });
     elGive.innerHTML = owedToMeHtml || `<div style="text-align:center; padding:15px; color:var(--muted); font-size:12px;">No active credit given right now.</div>`;
     elTake.innerHTML = owedByMeHtml || `<div style="text-align:center; padding:15px; color:var(--muted); font-size:12px;">No active loans taken right now.</div>`;
+    // Keep visibility in sync with toggle state
+    elGive.classList.toggle('hidden', !creditListState.owedToMe);
+    elTake.classList.toggle('hidden', !creditListState.owedByMe);
 }
 
 function openCreditAction(name, action, maxAmt){
@@ -994,6 +1038,7 @@ function openPersonDetail(name){
                 <span class="stmt-desc">${actionLabel[e.type]}</span>
                 <span class="num stmt-amt ${isIn ? 'credit' : 'debit'}">${isIn ? '+' : '-'} ₹${e.amount.toLocaleString('en-IN')}</span>
             </div>
+            ${e.remarks ? `<div class="stmt-row-bal" style="color:var(--muted); font-style:italic;">📝 ${e.remarks}</div>` : ''}
         </div>`;
     });
     document.getElementById('pdHistoryList').innerHTML = html || `<div style="text-align:center; padding:15px; color:var(--muted); font-size:12px;">No history yet.</div>`;
@@ -1444,6 +1489,7 @@ function resetForm(){
 
     document.getElementById('cAmt').value = "";
     document.getElementById('cName').value = "";
+    document.getElementById('cRemarks').value = "";
     document.getElementById('cDate').value = today;
     document.getElementById('cInKind').checked = false;
     document.getElementById('cAccBox').classList.remove('hidden');
