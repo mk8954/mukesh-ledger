@@ -181,6 +181,20 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
 .stmt-bal-card { background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 14px; padding: 12px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 .stmt-bal-card .label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .stmt-bal-card .amt { font-size: 16px; font-weight: 800; color: var(--primary); }
+
+/* Category chips in the entry form */
+.cat-chip { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1.5px solid #e2e8f0; background: #f8fafc; color: var(--muted); cursor: pointer; transition: 0.15s; white-space: nowrap; }
+.cat-chip.selected { border-color: var(--primary); background: #f0fdf4; color: var(--primary); }
+
+/* Monthly summary card on Home */
+.month-summary { border-radius: 16px; background: white; border: 1px solid #f1f5f9; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+.ms-title { font-size: 12px; font-weight: 800; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 12px; }
+.ms-row { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; }
+.ms-label { font-size: 12px; color: var(--muted); }
+.ms-val { font-size: 14px; font-weight: 800; }
+.ms-divider { height: 1px; background: #f1f5f9; margin: 10px 0; }
+.ms-cat-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.ms-cat-chip { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 12px; background: #f1f5f9; color: var(--muted); }
 .stmt-row { background: white; border: 1px solid #f1f5f9; border-radius: 14px; padding: 12px 16px; margin-bottom: 8px; }
 .stmt-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .stmt-date { font-size: 11px; color: var(--muted); font-weight: 600; }
@@ -240,18 +254,25 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
 
     <div style="padding:25px 15px 10px; font-weight:800; font-size:16px;">Quick Actions</div>
     <div style="display:flex; justify-content:space-around; padding:10px;">
-        <div onclick="openForm('expense')" style="text-align:center"><div style="background:var(--red); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><line x1="12" y1="4" x2="12" y2="16"/><polyline points="6 11 12 17 18 11"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
-        </div><small>Expense</small></div>
-        <div onclick="openForm('income')" style="text-align:center"><div style="background:var(--green); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><line x1="12" y1="20" x2="12" y2="8"/><polyline points="6 13 12 7 18 13"/><line x1="4" y1="4" x2="20" y2="4"/></svg>
-        </div><small>Income</small></div>
-        <div onclick="showTab('scr-credit')" style="text-align:center"><div style="background:var(--secondary); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 19c0-3 2.5-5 6-5s6 2 6 5"/><path d="M10 19c0-3 2.5-5 6-5s6 2 6 5"/></svg>
-        </div><small>Credit</small></div>
-        <div onclick="openForm('transfer')" style="text-align:center"><div style="background:#8b5cf6; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="17 2 21 6 17 10"/><line x1="3" y1="6" x2="21" y2="6"/><polyline points="7 22 3 18 7 14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
-        </div><small>Transfer</small></div>
+        <div onclick="openForm('expense')" style="text-align:center"><div style="background:var(--red); width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="12" y1="4" x2="12" y2="16"/><polyline points="6 11 12 17 18 11"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+        </div><small style="font-size:10px;">Expense</small></div>
+        <div onclick="openForm('income')" style="text-align:center"><div style="background:var(--green); width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="12" y1="20" x2="12" y2="8"/><polyline points="6 13 12 7 18 13"/><line x1="4" y1="4" x2="20" y2="4"/></svg>
+        </div><small style="font-size:10px;">Income</small></div>
+        <div onclick="openForm('moneyin')" style="text-align:center"><div style="background:#0891b2; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="3 7 12 3 21 7"/><path d="M3 7v10l9 4 9-4V7"/><line x1="12" y1="3" x2="12" y2="17"/></svg>
+        </div><small style="font-size:10px;">Money In</small></div>
+        <div onclick="showTab('scr-credit')" style="text-align:center"><div style="background:var(--secondary); width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 19c0-3 2.5-5 6-5s6 2 6 5"/><path d="M10 19c0-3 2.5-5 6-5s6 2 6 5"/></svg>
+        </div><small style="font-size:10px;">Credit</small></div>
+        <div onclick="openForm('transfer')" style="text-align:center"><div style="background:#8b5cf6; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="17 2 21 6 17 10"/><line x1="3" y1="6" x2="21" y2="6"/><polyline points="7 22 3 18 7 14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+        </div><small style="font-size:10px;">Transfer</small></div>
+    </div>
+
+    <div id="monthlySummary" style="margin:0 15px 10px;">
+        <!-- populated by renderMonthlySummary() -->
     </div>
 
     <div style="padding:25px 15px 5px; display: flex; justify-content: space-between; align-items: center;">
@@ -341,7 +362,13 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
         </div>
         <div class="input-block"><label class="input-label">Date</label><input type="date" id="fDate" class="full-input" value=""></div>
         <div class="input-block"><label class="input-label">Amount</label><div class="amt-row"><span id="fSym" class="amt-symbol">₹</span><input type="number" id="fAmt" class="amt-field" placeholder="0.00"></div></div>
-        <div id="fMeta"><div class="input-block"><label class="input-label">Particulars</label><input type="text" id="fDesc" class="full-input" placeholder="Details"></div><div class="input-block"><label class="input-label">Account</label><select id="fSrc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div></div>
+        <div id="fMeta">
+            <div class="input-block"><label class="input-label">Particulars</label><input type="text" id="fDesc" class="full-input" placeholder="Details"></div>
+            <div class="input-block" id="fCatBox"><label class="input-label">Category</label>
+                <div id="fCatGrid" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;"></div>
+            </div>
+            <div class="input-block"><label class="input-label">Account</label><select id="fSrc" class="full-input"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="credit">Credit</option></select></div>
+        </div>
         <button class="btn-main" onclick="saveEntry()">Save Record</button>
         <button class="btn-main" style="background:#f1f5f9; color:var(--muted); margin-top:10px;" onclick="showTab('scr-home')">Cancel</button>
     </div>
@@ -381,7 +408,12 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
         <button class="btn-main" style="background:var(--red); margin:0;" onclick="exportPDF()">📄 This Account</button>
         <button class="btn-main" style="background:var(--secondary); margin:0;" onclick="exportCombinedPDF()">📑 All Accounts</button>
     </div>
-
+    <div style="padding:10px 15px 0;">
+        <div class="amt-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:0 14px;">
+            <span style="font-size:16px; margin-right:8px; color:var(--muted);">🔍</span>
+            <input type="text" id="stmtSearch" class="amt-field" placeholder="Search particulars…" oninput="filterStmt()" style="font-size:14px; font-weight:500;">
+        </div>
+    </div>
     <div id="stmtCardList" style="padding:15px 15px 20px;"></div>
 </div>
 
@@ -530,13 +562,46 @@ function showTab(id){
     if(document.getElementById(nid)) document.getElementById(nid).classList.add('active');
 }
 
+const CATEGORIES = [
+    {id:'food',      label:'🍱 Food',       color:'#fef3c7', text:'#92400e'},
+    {id:'transport', label:'🚗 Transport',   color:'#e0f2fe', text:'#0369a1'},
+    {id:'medical',   label:'💊 Medical',     color:'#fce7f3', text:'#9d174d'},
+    {id:'household', label:'🏠 Household',   color:'#f3e8ff', text:'#6b21a8'},
+    {id:'personal',  label:'👤 Personal',    color:'#f0fdf4', text:'#166534'},
+    {id:'office',    label:'💼 Office',      color:'#e0e7ff', text:'#3730a3'},
+    {id:'emi',       label:'📅 EMI/Loan',    color:'#fff7ed', text:'#c2410c'},
+    {id:'other',     label:'📦 Other',       color:'#f8fafc', text:'#475569'}
+];
+let selectedCategory = null;
+
+function renderCatChips(show){
+    const box = document.getElementById('fCatBox');
+    box.classList.toggle('hidden', !show);
+    if(!show){ selectedCategory = null; return; }
+    selectedCategory = null;
+    document.getElementById('fCatGrid').innerHTML = CATEGORIES.map(c=>
+        `<div class="cat-chip" id="chip-${c.id}" onclick="selectCat('${c.id}')">${c.label}</div>`
+    ).join('');
+}
+
+function selectCat(id){
+    selectedCategory = id;
+    document.querySelectorAll('.cat-chip').forEach(el=>el.classList.remove('selected'));
+    const chip = document.getElementById('chip-'+id);
+    if(chip) chip.classList.add('selected');
+}
+
 function openForm(m){
-    fMode = m; document.getElementById('fTitle').innerText = m.toUpperCase();
+    fMode = m;
+    const labels = {expense:'EXPENSE', income:'INCOME', transfer:'TRANSFER', moneyin:'MONEY IN'};
+    document.getElementById('fTitle').innerText = labels[m] || m.toUpperCase();
     document.getElementById('transfer-box').classList.toggle('hidden', m !== 'transfer');
     document.getElementById('fMeta').classList.toggle('hidden', m === 'transfer');
-    document.getElementById('fSym').style.color = (m==='income') ? 'var(--green)' : 'var(--red)';
+    const isIn = (m === 'income' || m === 'moneyin');
+    document.getElementById('fSym').style.color = isIn ? 'var(--green)' : 'var(--red)';
+    renderCatChips(m === 'expense'); // categories only for expenses
     setTodayDates();
-	showTab('scr-form');
+    showTab('scr-form');
 }
 
 function moveSeg(i, t){
@@ -630,7 +695,7 @@ function saveCredit(){
 	showTab('scr-home');
 }
 
-// ============== Save: Expense / Income / Transfer ==============
+// ============== Save: Expense / Income / Money In / Transfer ==============
 function saveEntry(){
     let a = +document.getElementById('fAmt').value, dt = document.getElementById('fDate').value;
     if(!a || a<=0 || !dt) return alert("Enter a valid amount and date");
@@ -642,9 +707,11 @@ function saveEntry(){
         entry = {id:genId(), type:'transfer', amount:a, desc:`Transfer: ${cap(f)} to ${cap(t)}`, src:f, dest:t, date:dt, effect:[{acc:f,delta:-a},{acc:t,delta:a}]};
     } else {
         let d = document.getElementById('fDesc').value || cap(fMode), s = document.getElementById('fSrc').value;
-        const delta = fMode==='income' ? a : -a;
+        const isIn = (fMode==='income' || fMode==='moneyin');
+        const delta = isIn ? a : -a;
         if(blockIfNegative(s, delta)) return;
         entry = {id:genId(), type:fMode, amount:a, desc:d, src:s, date:dt, effect:[{acc:s, delta}]};
+        if(selectedCategory) entry.category = selectedCategory;
     }
     showLoader("Saving...");
     setTimeout(()=>{
@@ -762,6 +829,58 @@ function render(){
     renderPeopleLists();
     renderRecent();
     renderBackupReminder();
+    renderMonthlySummary();
+}
+
+function renderMonthlySummary(){
+    const el = document.getElementById('monthlySummary');
+    if(!el) return;
+    const sel = new Date().toISOString().slice(0,7);
+
+    let spent=0, earned=0, moneyIn=0;
+    const catTotals = {};
+    ledger.forEach(e=>{
+        if(e.date.slice(0,7) !== sel) return;
+        if(e.type==='expense'){ spent += e.amount; if(e.category) catTotals[e.category] = (catTotals[e.category]||0)+e.amount; }
+        if(e.type==='income') earned += e.amount;
+        if(e.type==='moneyin') moneyIn += e.amount;
+    });
+    const net = (earned + moneyIn) - spent;
+    const netColor = net >= 0 ? 'var(--green)' : 'var(--red)';
+
+    const monthName = new Date().toLocaleString('en-IN', {month:'long', year:'numeric'});
+
+    let catHtml = '';
+    const sorted = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    if(sorted.length){
+        const cat = Object.fromEntries(CATEGORIES.map(c=>[c.id,c]));
+        catHtml = `<div class="ms-divider"></div>
+        <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:6px;">TOP EXPENSE CATEGORIES</div>
+        <div class="ms-cat-row">${sorted.map(([id,amt])=>{
+            const c = cat[id]; if(!c) return '';
+            return `<span class="ms-cat-chip" style="background:${c.color}; color:${c.text};">${c.label} ₹${amt.toLocaleString('en-IN')}</span>`;
+        }).join('')}</div>`;
+    }
+
+    el.innerHTML = `<div class="month-summary">
+        <div class="ms-title">THIS MONTH — ${monthName.toUpperCase()}</div>
+        <div class="ms-row"><span class="ms-label">💸 Spent</span><span class="ms-val num" style="color:var(--red);">- ₹${spent.toLocaleString('en-IN')}</span></div>
+        <div class="ms-row"><span class="ms-label">💰 Income</span><span class="ms-val num" style="color:var(--green);">+ ₹${earned.toLocaleString('en-IN')}</span></div>
+        ${moneyIn > 0 ? `<div class="ms-row"><span class="ms-label">📦 Money In</span><span class="ms-val num" style="color:#0891b2;">+ ₹${moneyIn.toLocaleString('en-IN')}</span></div>` : ''}
+        <div class="ms-divider"></div>
+        <div class="ms-row"><span class="ms-label" style="font-weight:700;">Net</span><span class="ms-val num" style="color:${netColor}; font-size:16px;">${net>=0?'+':''}₹${Math.abs(net).toLocaleString('en-IN')}</span></div>
+        ${catHtml}
+    </div>`;
+}
+
+// Statement search - filters visible card rows without regenerating from ledger
+function filterStmt(){
+    const q = (document.getElementById('stmtSearch').value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#stmtCardList .stmt-row');
+    rows.forEach(row=>{
+        const text = row.querySelector('.stmt-desc')?.textContent.toLowerCase() || '';
+        row.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
 }
 
 function fmt(iso){
@@ -845,7 +964,7 @@ function getStatementRows(acc, sel){
     for(let i = ledger.length - 1; i >= 0; i--){
         const e = ledger[i];
         effectFor(e).forEach(f=>{
-            if(f.acc === acc) accEntries.push({date:e.date, desc:e.desc, type:e.type, delta:f.delta});
+            if(f.acc === acc) accEntries.push({date:e.date, desc:e.desc, type:e.type, delta:f.delta, category:e.category});
         });
     }
 
@@ -859,7 +978,7 @@ function getStatementRows(acc, sel){
     let b = opening;
     const rows = monthEntries.map(x=>{
         b += x.delta;
-        return {date:x.date, desc:x.desc, type:x.type, delta:x.delta, balanceAfter:b};
+        return {date:x.date, desc:x.desc, type:x.type, delta:x.delta, category:x.category, balanceAfter:b};
     });
 
     return {opening, closing:b, rows};
@@ -880,10 +999,12 @@ function renderStmt(){
         [...rows].reverse().forEach(x=>{
             const isIn = x.delta >= 0;
             const abs = Math.abs(x.delta).toFixed(2);
+            const catInfo = x.category ? CATEGORIES.find(c=>c.id===x.category) : null;
+            const catBadge = catInfo ? `<span style="font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px; background:${catInfo.color}; color:${catInfo.text};">${catInfo.label}</span>` : '';
             cardHtml += `<div class="stmt-row">
                 <div class="stmt-row-top">
                     <span class="stmt-date">${fmt(x.date)}</span>
-                    <span class="stmt-type-badge">${x.type.toUpperCase()}</span>
+                    <div style="display:flex; gap:4px; align-items:center;"><span class="stmt-type-badge">${x.type.toUpperCase()}</span>${catBadge}</div>
                 </div>
                 <div class="stmt-row-mid">
                     <span class="stmt-desc">${x.desc}</span>
@@ -1087,6 +1208,8 @@ function renderRecent() {
         const amountColor = (isTransfer || e.inKind) ? 'var(--secondary)' : (isPlus ? 'var(--green)' : 'var(--red)');
         const sign = (isTransfer || e.inKind) ? '' : (isPlus ? '+' : '-');
         const subline = e.inKind ? 'IN KIND • no account' : e.src.toUpperCase();
+        const catInfo = e.category ? CATEGORIES.find(c=>c.id===e.category) : null;
+        const catBadge = catInfo ? `<span style="font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px; background:${catInfo.color}; color:${catInfo.text}; margin-left:6px;">${catInfo.label}</span>` : '';
 
         html += `
             <div class="recent-item">
@@ -1095,7 +1218,7 @@ function renderRecent() {
                 </div>
                 <div style="flex: 1; min-width:0; cursor:pointer;" onclick="openEditModal('${e.id}')">
                     <div style="font-weight: 700; font-size: 14px; color: var(--text);">${e.desc}</div>
-                    <div style="font-size: 11px; color: var(--muted);">${fmt(e.date)} • ${subline}</div>
+                    <div style="font-size: 11px; color: var(--muted);">${fmt(e.date)} • ${subline}${catBadge}</div>
                 </div>
                 <div class="num" style="text-align: right; font-weight: 800; font-size: 14px; color: ${amountColor};">
                     ${sign} ₹${e.amount.toLocaleString('en-IN')}
