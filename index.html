@@ -186,6 +186,18 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
 .cat-chip { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1.5px solid #e2e8f0; background: #f8fafc; color: var(--muted); cursor: pointer; transition: 0.15s; white-space: nowrap; }
 .cat-chip.selected { border-color: var(--primary); background: #f0fdf4; color: var(--primary); }
 
+/* PIN screen */
+.pin-dots { display:flex; gap:18px; margin-bottom:40px; }
+.pin-dot { width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,0.4); background:transparent; transition:0.15s; }
+.pin-dot.filled { background:white; border-color:white; }
+.pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; width:100%; max-width:280px; }
+.pin-key { height:64px; border-radius:16px; background:rgba(255,255,255,0.1); border:none; color:white; font-size:22px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.1s; }
+.pin-key:active { background:rgba(255,255,255,0.25); transform:scale(0.95); }
+.pin-empty { background:transparent !important; cursor:default; }
+.pin-del { font-size:18px; }
+@keyframes pinShake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+.pin-shake { animation:pinShake 0.35s ease; }
+
 /* Monthly summary card on Home */
 .month-summary { border-radius: 16px; background: white; border: 1px solid #f1f5f9; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
 .ms-title { font-size: 12px; font-weight: 800; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 12px; }
@@ -253,7 +265,7 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
     <div id="backupReminder" onclick="showTab('scr-backup')" style="margin:10px 15px; padding:10px 14px; border-radius:12px; font-size:12px; font-weight:600; cursor:pointer;"></div>
 
     <div style="padding:25px 15px 10px; font-weight:800; font-size:16px;">Quick Actions</div>
-    <div style="display:flex; justify-content:space-around; padding:10px;">
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:0 15px 10px;">
         <div onclick="openForm('expense')" style="text-align:center"><div style="background:var(--red); width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="12" y1="4" x2="12" y2="16"/><polyline points="6 11 12 17 18 11"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
         </div><small style="font-size:10px;">Expense</small></div>
@@ -263,6 +275,9 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
         <div onclick="openForm('moneyin')" style="text-align:center"><div style="background:#0891b2; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="3 7 12 3 21 7"/><path d="M3 7v10l9 4 9-4V7"/><line x1="12" y1="3" x2="12" y2="17"/></svg>
         </div><small style="font-size:10px;">Money In</small></div>
+        <div onclick="openForm('moneyout')" style="text-align:center"><div style="background:#f97316; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="3 17 12 21 21 17"/><path d="M3 17V7l9-4 9 4v10"/><line x1="12" y1="21" x2="12" y2="7"/></svg>
+        </div><small style="font-size:10px;">Money Out</small></div>
         <div onclick="showTab('scr-credit')" style="text-align:center"><div style="background:var(--secondary); width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 5px">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 19c0-3 2.5-5 6-5s6 2 6 5"/><path d="M10 19c0-3 2.5-5 6-5s6 2 6 5"/></svg>
         </div><small style="font-size:10px;">Credit</small></div>
@@ -393,6 +408,16 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
         <div class="input-block"><label class="input-label">Reason</label><input type="text" id="aReason" class="full-input"></div>
         <button class="btn-main" style="background:#8b5cf6" onclick="doAdjust()">Apply</button>
     </div>
+    <div class="card">
+        <h3>🔒 App PIN</h3>
+        <p id="pinStatusText" style="font-size:12px; color:var(--muted); margin-top:-10px; margin-bottom:16px;"></p>
+        <div class="input-block"><label class="input-label">New PIN (4 digits)</label>
+            <input type="password" id="pinInput" class="full-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="Enter 4-digit PIN"></div>
+        <div class="input-block"><label class="input-label">Confirm PIN</label>
+            <input type="password" id="pinConfirm" class="full-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="Re-enter PIN"></div>
+        <button class="btn-main" onclick="savePin()">Set PIN</button>
+        <button class="btn-main" id="removePinBtn" style="background:#fee2e2; color:var(--red); margin-top:10px;" onclick="removePin()">Remove PIN</button>
+    </div>
 </div>
 
 <div id="scr-stmt" class="hidden">
@@ -490,6 +515,23 @@ td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
   </div>
 </div>
 
+<!-- PIN lock screen - shown on startup if a PIN is set -->
+<div id="pinScreen" style="position:fixed; inset:0; z-index:9999; background:linear-gradient(155deg,#0b1f1c,#06251f,#065f46); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 30px;">
+    <div style="width:72px; height:72px; border-radius:22px; background:rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; font-size:32px; margin-bottom:20px;">₹</div>
+    <div style="color:white; font-size:22px; font-weight:800; margin-bottom:6px;">Expense Tracker</div>
+    <div id="pinPrompt" style="color:rgba(255,255,255,0.55); font-size:13px; margin-bottom:36px;">Enter PIN to continue</div>
+    <div class="pin-dots" id="pinDots">
+        <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-pad">
+        <button class="pin-key" onclick="pinKey('1')">1</button><button class="pin-key" onclick="pinKey('2')">2</button><button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button><button class="pin-key" onclick="pinKey('5')">5</button><button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button><button class="pin-key" onclick="pinKey('8')">8</button><button class="pin-key" onclick="pinKey('9')">9</button>
+        <div class="pin-key pin-empty"></div><button class="pin-key" onclick="pinKey('0')">0</button><button class="pin-key pin-del" onclick="pinDel()">⌫</button>
+    </div>
+</div>
+
 <script>
 // ============== Core state ==============
 let ledger = JSON.parse(localStorage.getItem('ledger') || '[]');
@@ -554,6 +596,7 @@ function showTab(id){
 	}
 	if(id === 'scr-set'){
 	   renderCreditLimitInfo();
+	   renderPinStatus();
 	}
     },150);
 
@@ -593,7 +636,7 @@ function selectCat(id){
 
 function openForm(m){
     fMode = m;
-    const labels = {expense:'EXPENSE', income:'INCOME', transfer:'TRANSFER', moneyin:'MONEY IN'};
+    const labels = {expense:'EXPENSE', income:'INCOME', transfer:'TRANSFER', moneyin:'MONEY IN', moneyout:'MONEY OUT'};
     document.getElementById('fTitle').innerText = labels[m] || m.toUpperCase();
     document.getElementById('transfer-box').classList.toggle('hidden', m !== 'transfer');
     document.getElementById('fMeta').classList.toggle('hidden', m === 'transfer');
@@ -708,10 +751,11 @@ function saveEntry(){
     } else {
         let d = document.getElementById('fDesc').value || cap(fMode), s = document.getElementById('fSrc').value;
         const isIn = (fMode==='income' || fMode==='moneyin');
+        const isOut = (fMode==='expense' || fMode==='moneyout');
         const delta = isIn ? a : -a;
         if(blockIfNegative(s, delta)) return;
         entry = {id:genId(), type:fMode, amount:a, desc:d, src:s, date:dt, effect:[{acc:s, delta}]};
-        if(selectedCategory) entry.category = selectedCategory;
+        if(selectedCategory && fMode==='expense') entry.category = selectedCategory;
     }
     showLoader("Saving...");
     setTimeout(()=>{
@@ -837,15 +881,16 @@ function renderMonthlySummary(){
     if(!el) return;
     const sel = new Date().toISOString().slice(0,7);
 
-    let spent=0, earned=0, moneyIn=0;
+    let spent=0, earned=0, moneyIn=0, moneyOut=0;
     const catTotals = {};
     ledger.forEach(e=>{
         if(e.date.slice(0,7) !== sel) return;
         if(e.type==='expense'){ spent += e.amount; if(e.category) catTotals[e.category] = (catTotals[e.category]||0)+e.amount; }
         if(e.type==='income') earned += e.amount;
         if(e.type==='moneyin') moneyIn += e.amount;
+        if(e.type==='moneyout') moneyOut += e.amount;
     });
-    const net = (earned + moneyIn) - spent;
+    const net = (earned + moneyIn) - (spent + moneyOut);
     const netColor = net >= 0 ? 'var(--green)' : 'var(--red)';
 
     const monthName = new Date().toLocaleString('en-IN', {month:'long', year:'numeric'});
@@ -867,6 +912,7 @@ function renderMonthlySummary(){
         <div class="ms-row"><span class="ms-label">💸 Spent</span><span class="ms-val num" style="color:var(--red);">- ₹${spent.toLocaleString('en-IN')}</span></div>
         <div class="ms-row"><span class="ms-label">💰 Income</span><span class="ms-val num" style="color:var(--green);">+ ₹${earned.toLocaleString('en-IN')}</span></div>
         ${moneyIn > 0 ? `<div class="ms-row"><span class="ms-label">📦 Money In</span><span class="ms-val num" style="color:#0891b2;">+ ₹${moneyIn.toLocaleString('en-IN')}</span></div>` : ''}
+        ${moneyOut > 0 ? `<div class="ms-row"><span class="ms-label">📤 Money Out</span><span class="ms-val num" style="color:#f97316;">- ₹${moneyOut.toLocaleString('en-IN')}</span></div>` : ''}
         <div class="ms-divider"></div>
         <div class="ms-row"><span class="ms-label" style="font-weight:700;">Net</span><span class="ms-val num" style="color:${netColor}; font-size:16px;">${net>=0?'+':''}₹${Math.abs(net).toLocaleString('en-IN')}</span></div>
         ${catHtml}
@@ -1202,10 +1248,10 @@ function renderRecent() {
     latestItems.forEach(e => {
         const isTransfer = e.type === 'transfer';
         const eff = effectFor(e);
-        const isPlus = (isTransfer || e.inKind) ? null : eff[0].delta > 0;
-        const icon = e.inKind ? '📦' : e.type === 'expense' ? '💸' : e.type === 'income' ? '💰' : isTransfer ? '⇄' : '🏦';
-        const bgColor = (isTransfer || e.inKind) ? '#ede9fe' : (isPlus ? '#dcfce7' : '#fee2e2');
-        const amountColor = (isTransfer || e.inKind) ? 'var(--secondary)' : (isPlus ? 'var(--green)' : 'var(--red)');
+        const isPlus = (isTransfer || e.inKind) ? null : eff.length > 0 ? eff[0].delta > 0 : false;
+        const icon = e.inKind ? '📦' : e.type==='moneyin' ? '📥' : e.type==='moneyout' ? '📤' : e.type==='expense' ? '💸' : e.type==='income' ? '💰' : isTransfer ? '⇄' : '🏦';
+        const bgColor = (isTransfer || e.inKind) ? '#ede9fe' : e.type==='moneyin' ? '#e0f2fe' : e.type==='moneyout' ? '#fff7ed' : (isPlus ? '#dcfce7' : '#fee2e2');
+        const amountColor = (isTransfer || e.inKind) ? 'var(--secondary)' : e.type==='moneyin' ? '#0891b2' : e.type==='moneyout' ? '#f97316' : (isPlus ? 'var(--green)' : 'var(--red)');
         const sign = (isTransfer || e.inKind) ? '' : (isPlus ? '+' : '-');
         const subline = e.inKind ? 'IN KIND • no account' : e.src.toUpperCase();
         const catInfo = e.category ? CATEGORIES.find(c=>c.id===e.category) : null;
@@ -1631,14 +1677,82 @@ function hideLoader(){
     setTimeout(()=>{ l.style.visibility="hidden"; },300);
 }
 
+// ============== PIN Security ==============
+let pinBuffer = '';
+
+function pinKey(digit){
+    if(pinBuffer.length >= 4) return;
+    pinBuffer += digit;
+    updatePinDots();
+    if(pinBuffer.length === 4) setTimeout(checkPin, 120);
+}
+
+function pinDel(){
+    pinBuffer = pinBuffer.slice(0,-1);
+    updatePinDots();
+}
+
+function updatePinDots(){
+    for(let i=0;i<4;i++){
+        const dot = document.getElementById('pd'+i);
+        if(dot) dot.classList.toggle('filled', i < pinBuffer.length);
+    }
+}
+
+function checkPin(){
+    const stored = localStorage.getItem('appPin');
+    if(pinBuffer === stored){
+        document.getElementById('pinScreen').style.display = 'none';
+    } else {
+        pinBuffer = '';
+        updatePinDots();
+        document.getElementById('pinPrompt').innerText = 'Wrong PIN — try again';
+        document.getElementById('pinDots').classList.add('pin-shake');
+        setTimeout(()=>{ document.getElementById('pinDots').classList.remove('pin-shake'); document.getElementById('pinPrompt').innerText = 'Enter PIN to continue'; }, 600);
+    }
+}
+
+function savePin(){
+    const p = document.getElementById('pinInput').value.trim();
+    const c = document.getElementById('pinConfirm').value.trim();
+    if(!/^\d{4}$/.test(p)) return alert("PIN must be exactly 4 digits (numbers only)");
+    if(p !== c) return alert("PINs don't match — re-enter both");
+    localStorage.setItem('appPin', p);
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinConfirm').value = '';
+    renderPinStatus();
+    alert("✅ PIN set. Lock the app by closing and reopening it.");
+}
+
+function removePin(){
+    if(!confirm("Remove PIN? Anyone with access to your device will be able to open the app.")) return;
+    localStorage.removeItem('appPin');
+    renderPinStatus();
+    alert("PIN removed.");
+}
+
+function renderPinStatus(){
+    const el = document.getElementById('pinStatusText');
+    const btn = document.getElementById('removePinBtn');
+    if(!el) return;
+    const hasPin = !!localStorage.getItem('appPin');
+    el.innerText = hasPin ? '🔒 PIN is currently active.' : '🔓 No PIN set — anyone can open this app.';
+    el.style.color = hasPin ? 'var(--primary)' : 'var(--muted)';
+    if(btn) btn.style.display = hasPin ? '' : 'none';
+}
+
 // ============== Startup ==============
 document.getElementById('stmtMonth').value = new Date().toISOString().slice(0,7);
 render();
 setupCardDots();
 
-// The service worker caches the app shell + the PDF library (jsPDF/autotable) the
-// first time they load successfully, so PDF export keeps working even if you're
-// offline later. Previously this was never registered, so it did nothing at all.
+// Check if PIN is set — if yes, keep the overlay visible and wait for input;
+// if not, hide it immediately so the user goes straight to the app.
+const storedPin = localStorage.getItem('appPin');
+if(!storedPin){
+    document.getElementById('pinScreen').style.display = 'none';
+}
+
 if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
